@@ -271,6 +271,9 @@
 
 (winner-mode 1)
 
+(add-to-list 'auto-mode-alist '("\\.tsx\\'" . js-mode))
+
+
 ;;* outline
 (defvar z/outline-regexp-alist
   '(
