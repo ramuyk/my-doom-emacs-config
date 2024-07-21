@@ -21,7 +21,6 @@
     (evil-define-key 'normal 'global (kbd "M-<right>") 'centaur-tabs-move-current-tab-to-right)
     (evil-define-key 'normal 'global (kbd "'") 'q/evil-goto-marker-or-bookmark)
     (evil-define-key 'normal 'global (kbd "m") 'a/evil-set-marker-and-bookmark)
-    ;;(evil-define-key 'normal 'global (kbd "p") 'a/evil-paste-after)
     (evil-define-key 'normal 'global (kbd "z a") 'a/toggle-current-outline)
     (evil-define-key 'normal 'global (kbd "z e") 'a/org-next-src-block)
     (evil-define-key 'normal 'global (kbd "z f a") 'outline-hide-body)
@@ -46,6 +45,7 @@
 (shortcut "." 'helm-M-x)
 (shortcut "SPC 1" 'delete-other-windows)
 (shortcut "SPC 0" 'delete-window)
+(shortcut "SPC ," 'a/root-reopen-file)
 (shortcut "<" 'a/goto-previous-outline)
 (shortcut ">" 'a/goto-next-outline)
 
@@ -53,13 +53,16 @@
 (shortcut "a" 'a/dired-root)
 
   ;;** b
-(shortcut "b b" 'a/helm-fuzzy-file-history)
-(shortcut "b t" 'a/helm-fuzzy-open-buffers)
+(shortcut "b b" 'a/helm-fuzzy-open-buffers)
+(shortcut "b t" 'a/helm-fuzzy-file-history)
 (shortcut "b l" 'a/helm-fuzzy-file-locate)
 (global-set-key (kbd "C-c y") 'q/helm-copy-to-temp-buffer)
 (shortcut "b m" 'toggle-minibuffer)
 (shortcut "b k" 'q/kill-buffer-and-go-back)
 (shortcut "b +" 'q/make-current-file-executable)
+
+  ;;** c
+(shortcut "c c" 'a/execute-code)
 
   ;;** e
 (shortcut "e" 'vterm)
@@ -288,6 +291,95 @@
 
 ;;* exec functions
 
+(defun a/execute-code ()
+  "Function that executes code based on the major mode."
+  (interactive)
+  (save-restriction
+    (widen)
+    (cond
+     ((eq major-mode 'sh-mode) (a/execute-bash-code))
+     ((eq major-mode 'python-mode) (a/execute-python-code))
+     ((eq major-mode 'go-mode) (a/execute-go-code))
+     ((eq major-mode 'yaml-mode) (a/execute-yaml-code))
+     ((eq major-mode 'dockerfile-mode) (a/execute-yaml-code))
+     ((or (eq major-mode 'js-mode) (eq major-mode 'js2-mode) (eq major-mode 'rjsx-mode)) (a/execute-js-code))
+     ((eq major-mode 'emacs-lisp-mode) (a/execute-emacs-lisp-code))
+     ((eq major-mode 'org-mode) (a/execute-org-code))
+     (t (message "No execution function for major mode: %s" major-mode)))))
+
+(defun a/execute-bash-code ()
+  "Execute bash script code."
+  (interactive)
+  (write-region (point-min) (point-max) "/tmp/file")
+  (a/run-async-shell-command-in-split-window "bash /tmp/file"))
+
+(defun a/execute-python-code ()
+  "Execute Python code."
+  (interactive)
+  (write-region (point-min) (point-max) "/tmp/file")
+  (a/run-async-shell-command-in-split-window "python3 /tmp/file"))
+
+(defun a/execute-go-code ()
+  "Execute Go code."
+  (interactive)
+  (write-region (point-min) (point-max) "/tmp/file")
+  (a/run-async-shell-command-in-split-window "mv /tmp/file /tmp/file.go && go run /tmp/file.go"))
+
+(defun a/execute-yaml-code ()
+  "Execute Docker Compose from YAML."
+  (interactive)
+  (write-region (point-min) (point-max) "/tmp/file")
+  (a/run-async-shell-command-in-split-window "docker compose up --build"))
+
+(defun a/execute-js-code ()
+  "Execute JavaScript code."
+  (interactive)
+  (write-region (point-min) (point-max) "/tmp/file")
+  (let ((node-path (if (projectile-project-p)
+                       (projectile-project-root)
+                     "~/node_modules")))
+    (a/run-async-shell-command-in-split-window (concat "NODE_PATH=" node-path " node /tmp/file"))))
+
+(defun a/execute-emacs-lisp-code ()
+  "Execute Emacs Lisp code."
+  (interactive)
+  (save-buffer)
+  (a/run-async-shell-command-in-split-window (concat "emacs --batch --script " buffer-file-name)))
+
+(defun a/execute-org-code ()
+  "Execute Org Babel code."
+  (interactive)
+  (org-ctrl-c-ctrl-c))
+
+
+(defvar execute-code-output-window nil
+  "Window to display the output of executed code.")
+
+(defun a/run-async-shell-command-in-split-window (code)
+  "Run async shell command in a split window."
+  (let ((current-window (selected-window)))
+    (unless (and execute-code-output-window (window-live-p execute-code-output-window))
+      (setq execute-code-output-window (split-window-horizontally))
+      (select-window execute-code-output-window)
+      (window-swap-states current-window execute-code-output-window)
+      (select-window current-window))
+    (with-selected-window execute-code-output-window
+      (switch-to-buffer (get-buffer-create "*Async Shell Command*"))
+      (let ((process (get-buffer-process (current-buffer))))
+        (when process
+          (delete-process process)))
+      (async-shell-command code))
+    (select-window current-window)))
+
+;;* root functions
+(defun a/root-reopen-file ()
+  "Reopen the current file as root."
+  (interactive)
+  (if buffer-file-name
+      (let ((point (point)))
+        (find-alternate-file (concat "/sudo::" buffer-file-name))
+        (goto-char point))
+    (message "Buffer is not visiting a file!")))
 
 ;;* macros
 (fset 'a/window-down (kbd "L zt"))
