@@ -12,6 +12,8 @@ First, update your system and install Emacs using Snap (Ubuntu).
 sudo apt update
 sudo snap install emacs --classic
 sudo apt install build-essential cmake libtool libvterm-dev # for vterm only
+npm install -g typescript-language-server typescript eslint # for javascript lsp
+npm install -g pyright # for python lsp
 ```
 
 ### Step 2: Install Doom Emacs with this Configuration

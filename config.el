@@ -212,6 +212,49 @@
     (setq tab-width 2)           ;; Set tab width to 2 spaces
     (setq lisp-indent-offset 2))) ;; Set Lisp indentation to 2 spaces
 
+;;* lsp
+
+;; Common Company settings
+(after! company
+  (setq company-idle-delay 0.1
+        company-minimum-prefix-length 1))
+
+(add-hook 'after-init-hook 'global-company-mode)
+
+;; Common LSP settings
+(after! lsp-mode
+  (setq lsp-enable-snippet t
+        lsp-auto-guess-root t))
+
+;; LSP UI settings (optional for better UI)
+(use-package! lsp-ui
+  :hook (lsp-mode . lsp-ui-mode)
+  :config
+  (setq lsp-ui-doc-enable t
+        lsp-ui-doc-position 'at-point
+        lsp-ui-doc-delay 0.2
+        lsp-ui-sideline-enable nil
+        lsp-ui-peek-enable t))
+
+(add-hook 'lsp-mode-hook 'lsp-ui-mode)
+
+;; Python LSP settings
+(after! lsp-python-ms
+  (setq lsp-python-ms-auto-install-server t))
+
+(add-hook 'python-mode-hook #'lsp)
+(add-hook 'python-mode-hook 'company-mode)
+
+;; JavaScript LSP settings
+(add-hook 'js-mode-hook #'lsp)
+(add-hook 'js2-mode-hook #'lsp)
+(add-hook 'rjsx-mode-hook #'lsp)
+
+(add-hook 'js-mode-hook 'company-mode)
+(add-hook 'js2-mode-hook 'company-mode)
+(add-hook 'rjsx-mode-hook 'company-mode)
+
+
 ;;* configuration
 (setq which-key-idle-delay 0.1)
 

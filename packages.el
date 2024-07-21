@@ -36,3 +36,4 @@
 (package! command-log-mode)
 (package! speed-type)
 (package! vimrc-mode)
+(package! flycheck)
