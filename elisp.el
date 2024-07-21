@@ -46,6 +46,8 @@
 (shortcut "." 'helm-M-x)
 (shortcut "SPC 1" 'delete-other-windows)
 (shortcut "SPC 0" 'delete-window)
+(shortcut "<" 'a/goto-previous-outline)
+(shortcut ">" 'a/goto-next-outline)
 
   ;;** a
 (shortcut "a" 'a/dired-root)
@@ -68,6 +70,14 @@
 (shortcut "f e m" 'a/open-file "open-elisp-el" (concat (getenv "HOME") "/.doom.d/elisp.el"))
 (shortcut "f e p" 'a/open-file "open-packages-el" (concat (getenv "HOME") "/.doom.d/packages.el"))
 (shortcut "f e r" 'a/open-file "open-packages-el" (concat (getenv "HOME") "/.doom.d/README.md"))
+
+  ;;** j
+(shortcut "j j" 'a/avy-goto-char-timer-dim-screen)
+(shortcut "j l" 'avy-goto-line)
+(shortcut "j w" 'avy-goto-word-or-subword-1)
+(shortcut "j 2" 'avy-goto-word-1)
+(shortcut "j c" 'avy-goto-char)
+(shortcut "j k" 'centaur-tabs-ace-jump)
 
   ;;** p
 (shortcut "p f" '+helm/projectile-find-file)
@@ -252,6 +262,29 @@
                    (string-equal (projectile-project-root) project-root)
                    (not (string-prefix-p " *Treemacs" (buffer-name buffer)))) ; Exclude Treemacs buffers
           (kill-buffer buffer))))))
+
+(defun a/goto-previous-outline ()
+  "Move to the previous outline heading."
+  (interactive)
+  (if (derived-mode-p 'org-mode)
+      (org-previous-visible-heading 1)
+    (outline-previous-visible-heading 1)))
+
+(defun a/goto-next-outline ()
+  "Move to the next outline heading."
+  (interactive)
+  (if (derived-mode-p 'org-mode)
+      (org-next-visible-heading 1)
+    (outline-next-visible-heading 1)))
+
+(defun a/avy-goto-char-timer-dim-screen ()
+  "Wrapper function that dims the screen before calling `avy-goto-char-timer'."
+  (interactive)
+  (let ((dimmed-face-remap (face-remap-add-relative 'default :foreground "#666666")))
+    (setq avy-timeout-seconds 0.4)
+	(unwind-protect
+	  (avy-goto-char-timer)
+	  (face-remap-remove-relative dimmed-face-remap))))
 
 ;;* exec functions
 

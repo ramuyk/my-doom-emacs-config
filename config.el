@@ -287,20 +287,26 @@
                 ))))
 
 (defun q/toggle-outline ()
-  "Toggle outline visibility using `outline-hide-subtree` and `outline-show-subtree`."
+  "Toggle outline visibility using `outline-hide-subtree` and `outline-show-subtree`.
+If not on a heading line, move to the previous visible heading and toggle its visibility."
   (interactive)
-  (unless (outline-on-heading-p t)
-    (outline-previous-visible-heading 1))
-  (if (outline-invisible-p (line-end-position))
-      (outline-show-subtree)
-    (outline-hide-subtree)))
+  (save-excursion
+    (unless (outline-on-heading-p t)
+      (outline-previous-visible-heading 1))
+    (if (outline-invisible-p (line-end-position))
+        (outline-show-subtree)
+      (outline-hide-subtree))))
 
 (defun a/context-aware-tab ()
   "A context-aware tab function."
   (interactive)
   (if (outline-on-heading-p t)
       (q/toggle-outline)
-    (indent-for-tab-command)))
+    (if (save-excursion (outline-back-to-heading t) (outline-on-heading-p t))
+        (save-excursion
+          (outline-back-to-heading t)
+          (q/toggle-outline))
+      (indent-for-tab-command))))
 
 (defun a/setup-outline-mode ()
   "Setup outline minor mode based on `z/outline-regexp-alist`."
@@ -325,12 +331,6 @@
   "Toggle comment on selected code."
   (interactive "r")
   (comment-or-uncomment-region beg end))
-
-(setq-default major-mode
-              (lambda () (if buffer-file-name
-                          (fundamental-mode)
-                            (let ((buffer-file-name (buffer-name)))
-                          (set-auto-mode)))))
 
 ;;* load elisp.el
 (load-file (expand-file-name "elisp.el" "~/.doom.d/"))
