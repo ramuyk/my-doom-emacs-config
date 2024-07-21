@@ -32,5 +32,7 @@
 ;; (package! builtin-package :recipe (:nonrecursive t))
 ;; (package! builtin-package-2 :recipe (:repo "myfork/package"))
 
-(package! speed-type)
 (package! centaur-tabs)
+(package! command-log-mode)
+(package! speed-type)
+(package! vimrc-mode)

@@ -137,6 +137,11 @@
 
 ;;* use-package
 
+(use-package! vimrc-mode
+  :mode (("\\.vim\\(rc\\)?\\'" . vimrc-mode)
+         ("\\.ideavimrc\\'" . vimrc-mode)
+         ("/vimrc\\'" . vimrc-mode)))
+
 (use-package! projectile
   :init
   (projectile-mode 1)
@@ -152,13 +157,13 @@
   :commands (speed-type-text speed-type-region)
 )
 
-;;(use-package! dired+
-;;  :load-path "~/.doom.d/external"
-;;  :init
-;;  (setq dired-hide-details-hide-symlink-targets t)
-;;  :config
-;;  (require 'dired+)
-;;  (add-hook 'dired-mode-hook 'dired-hide-details-mode))
+(use-package! dired+
+  :load-path "~/.doom.d/external"
+  :init
+  (setq dired-hide-details-hide-symlink-targets t)
+  :config
+  (require 'dired+)
+  (add-hook 'dired-mode-hook 'dired-hide-details-mode))
 
 
 (use-package! centaur-tabs
@@ -175,6 +180,11 @@
     (run-with-timer 0.1 nil 'z/treemacs-toggle)))
 
 (advice-add 'centaur-tabs-switch-group :after 'z/post-switch-project-hook)
+
+(use-package! command-log-mode
+  :config
+        (global-command-log-mode)
+)
 
 ;;* shortcut function
 (defun shortcut (shortcut command &optional name &rest args)
@@ -196,6 +206,12 @@
     (setq tab-width 2)            ; Set tab width to 2 spaces
     (setq yaml-indent-offset 2))) ; Set YAML indentation to 2 spaces
 
+(add-hook 'emacs-lisp-mode-hook
+  (lambda ()
+    (setq indent-tabs-mode nil)  ;; Use spaces instead of tabs
+    (setq tab-width 2)           ;; Set tab width to 2 spaces
+    (setq lisp-indent-offset 2))) ;; Set Lisp indentation to 2 spaces
+
 ;;* configuration
 (setq which-key-idle-delay 0.1)
 
@@ -209,6 +225,8 @@
   (run-with-timer 2 nil (lambda ()
                            ;; (set-popup-rule! "^\\*helm" :size 0.99 :vslot -4 :select t :quit t :ttl nil))))
                            (set-popup-rule! "^\\*helm" :size 0.99 :vslot -4 :select t :quit t :ttl nil))))
+
+(winner-mode 1)
 
 ;;* outline
 (defvar z/outline-regexp-alist
@@ -246,6 +264,13 @@
   (let ((str (match-string 0)))
     (cl-count ?* str)))
 
+(defun z/debug-ruby-outline ()
+  "Debug function to manually set outline-regexp for Ruby mode."
+  (interactive)
+  (setq-local outline-regexp "\\s-*\\(#\\*+\\|\\(class\\|module\\)\\s-+\\)")
+  (outline-minor-mode 1)
+  (message "Manually set outline-regexp for Ruby: %s" outline-regexp))
+
 (dolist (pair z/outline-regexp-alist)
   (let ((mode (car pair))
         (regexp (cdr pair)))
@@ -279,11 +304,13 @@
 
 (defun a/setup-outline-mode ()
   "Setup outline minor mode based on `z/outline-regexp-alist`."
+  (message "setup-outline-mode")
   (let ((regexp (cdr (assoc major-mode z/outline-regexp-alist))))
     (when regexp
       (setq-local outline-regexp regexp)
       (outline-minor-mode 1)
       (evil-define-key 'normal outline-minor-mode-map (kbd "TAB") 'a/context-aware-tab)
+      (evil-define-key 'visual 'global (kbd "TAB") 'a/toggle-comments)
       (cond
        ((eq major-mode 'python-mode)
         (setq-local outline-heading-end-regexp "\n"))
@@ -293,12 +320,17 @@
 
 (add-hook 'prog-mode-hook 'a/setup-outline-mode)
 
-(defun z/debug-ruby-outline ()
-  "Debug function to manually set outline-regexp for Ruby mode."
-  (interactive)
-  (setq-local outline-regexp "\\s-*\\(#\\*+\\|\\(class\\|module\\)\\s-+\\)")
-  (outline-minor-mode 1)
-  (message "Manually set outline-regexp for Ruby: %s" outline-regexp))
+
+(defun a/toggle-comments (beg end)
+  "Toggle comment on selected code."
+  (interactive "r")
+  (comment-or-uncomment-region beg end))
+
+(setq-default major-mode
+              (lambda () (if buffer-file-name
+                          (fundamental-mode)
+                            (let ((buffer-file-name (buffer-name)))
+                          (set-auto-mode)))))
 
 ;;* load elisp.el
 (load-file (expand-file-name "elisp.el" "~/.doom.d/"))

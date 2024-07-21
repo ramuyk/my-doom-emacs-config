@@ -5,10 +5,11 @@
 (map! :leader "SPC" nil)
 
 ;;* evil shortcuts
+(with-eval-after-load 'helm-files
+  (define-key helm-find-files-map (kbd "^") 'helm-find-files-up-one-level))
+
 (with-eval-after-load 'evil
   (progn
-    ;;(evil-define-key 'normal 'global (kbd "<tab>") 'q/toggle-outline)
-    (evil-define-key 'normal 'global (kbd "SPC o o") 'q/toggle-outline)
     (evil-define-key 'insert 'global (kbd "<S-iso-lefttab>") 'q/go-to-column-50)
     (evil-define-key 'normal 'global (kbd "<down>") 'a/window-down)
     (evil-define-key 'normal 'global (kbd "<up>") 'q/window-up)
@@ -27,14 +28,10 @@
     (evil-define-key 'normal 'global (kbd "z f u") 'outline-show-all)
     (evil-define-key 'normal 'global (kbd "z n") 'a/narrow-to-outline)
     (evil-define-key 'normal 'global (kbd "z u") 'a/widen-and-collapse-if-narrowed)
-    (evil-define-key 'visual 'global (kbd "<tab>") 'a/toggle-comments)
-    (evil-define-key 'visual 'global (kbd "ts") 'sort-lines)
-    (evil-define-key 'visual 'global (kbd "tt") 'a/create-temp-buffer-with-selection)
+    (evil-define-key 'visual 'global (kbd "t s") 'sort-lines)
+    (evil-define-key 'visual 'global (kbd "t t") 'a/create-temp-buffer-with-selection)
     (evil-define-key 'visual 'global (kbd "t p") 'speed-type-region)
     ))
-
-(fset 'a/window-down (kbd "L zt"))
-(fset 'q/window-up (kbd "H zb"))
 
 ;;* shortcuts global
 (global-set-key (kbd "C-j") 'windmove-down)
@@ -42,23 +39,69 @@
 (global-set-key (kbd "C-l") 'windmove-right)
 (global-set-key (kbd "C-h") 'windmove-left)
 
-;;* shortcuts SPC
+;;* SPC
+
+  ;;** special characters
+(shortcut "," 'a/helm-fuzzy-folder-find-files)
+(shortcut "." 'helm-M-x)
+(shortcut "SPC 1" 'delete-other-windows)
+(shortcut "SPC 0" 'delete-window)
+
+  ;;** a
+(shortcut "a" 'a/dired-root)
+
+  ;;** b
+(shortcut "b b" 'a/helm-fuzzy-file-history)
+(shortcut "b t" 'a/helm-fuzzy-open-buffers)
+(shortcut "b l" 'a/helm-fuzzy-file-locate)
+(global-set-key (kbd "C-c y") 'q/helm-copy-to-temp-buffer)
+(shortcut "b m" 'toggle-minibuffer)
+(shortcut "b k" 'q/kill-buffer-and-go-back)
+(shortcut "b +" 'q/make-current-file-executable)
+
+  ;;** e
+(shortcut "e" 'vterm)
+
+  ;;** f
 (shortcut "f e d" 'a/open-file "open-config-el" (concat (getenv "HOME") "/.doom.d/config.el"))
 (shortcut "f e i" 'a/open-file "open-init-el" (concat (getenv "HOME") "/.doom.d/init.el"))
 (shortcut "f e m" 'a/open-file "open-elisp-el" (concat (getenv "HOME") "/.doom.d/elisp.el"))
 (shortcut "f e p" 'a/open-file "open-packages-el" (concat (getenv "HOME") "/.doom.d/packages.el"))
+(shortcut "f e r" 'a/open-file "open-packages-el" (concat (getenv "HOME") "/.doom.d/README.md"))
 
-(shortcut "," 'a/helm-fuzzy-folder-find-files)
-(shortcut "." 'helm-M-x)
+  ;;** p
+(shortcut "p f" '+helm/projectile-find-file)
+(shortcut "p i" 'a/helm-fuzzy-project-content-rg)
+(shortcut "p k" 'a/projectile-kill-other-buffers)
+(shortcut "p p" 'a/helm-fuzzy-project-switch)
 
-(shortcut "SPC 1" 'delete-other-windows)
-(shortcut "SPC 0" 'delete-window)
+
+  ;;** m
+(shortcut "m m" 'magit-log-current)
+(shortcut "m f" 'magit-log-buffer-file)
+(shortcut "m r" 'magit-refresh)
+(shortcut "m l" 'magit-pull)
+
+  ;;** h
+(shortcut "h l" 'clm/open-command-log-buffer)
+
+  ;;** w
+(shortcut "w k" 'delete-window)
+(shortcut "w h" 'split-window-horizontally)
+(shortcut "w v" 'split-window-vertically)
+(shortcut "w w" 'winner-undo)
+(shortcut "w f" 'winner-redo)
 
 ;;* functions
 (defun a/open-file (path)
   "opens a file from the system"
   (interactive)
   (find-file path))
+
+(defun a/dired-root ()
+  "Open Dired in the directory of the current buffer's file."
+  (interactive)
+  (dired default-directory))
 
 (defun q/go-to-column-50 ()
   "Go to the 50th column of the current line, inserting spaces if necessary."
@@ -152,20 +195,70 @@
     (outline-hide-subtree)
     (evil-scroll-line-to-center nil)))
 
-(defun a/toggle-comments (beg end)
-  "Toggle comment on selected code."
-  (interactive "r")
-  (comment-or-uncomment-region beg end))
 
-(setq-default major-mode
-              (lambda () (if buffer-file-name
-                          (fundamental-mode)
-                            (let ((buffer-file-name (buffer-name)))
-                          (set-auto-mode)))))
+(defun q/kill-buffer-and-go-back ()
+  "Kills the current buffer and switches to the previously active buffer."
+  (interactive)
+  (let ((previous-buf (other-buffer (current-buffer) t)))
+    (kill-this-buffer)
+    (switch-to-buffer previous-buf)))
 
+(defun q/make-current-file-executable ()
+  "Make the current file executable."
+  (interactive)
+  (let ((file (buffer-file-name)))
+    (if (and file (file-exists-p file))
+        (progn
+          (set-file-modes file (logior (file-modes file) #o100))
+          (message "Made %s executable" file))
+      (error "Buffer is not visiting a file"))))
+
+(defvar display-messages-buffer-toggle t)
+(defun toggle-minibuffer ()
+  "Toggle the visibility of the messages buffer and set focus accordingly."
+  (interactive)
+  (let ((output-buffer-name "*Messages*"))
+    (if display-messages-buffer-toggle
+        (progn
+          (with-current-buffer output-buffer-name
+            (goto-char (point-max)))
+          (switch-to-buffer-other-window output-buffer-name))
+      (progn
+        (delete-windows-on output-buffer-name)
+        (bury-buffer output-buffer-name)
+        (other-window -1)))
+    (setq display-messages-buffer-toggle (not display-messages-buffer-toggle))))
+
+(defun a/create-temp-buffer-with-selection ()
+  "Create a temporary buffer with the currently selected text."
+  (interactive)
+  (let ((selection (buffer-substring-no-properties (region-beginning) (region-end)))
+        (filename (buffer-file-name)))
+    (switch-to-buffer (generate-new-buffer-name
+                       (concat "*Temp*"
+                               (when filename
+                                 (concat "." (file-name-extension filename))))))
+    (insert selection)))
+
+(defun a/projectile-kill-other-buffers ()
+  "Kill all buffers of the current project except the current one and Treemacs."
+  (interactive)
+  (let ((current-buffer (current-buffer))
+        (project-root (projectile-project-root)))
+    (dolist (buffer (buffer-list))
+      (with-current-buffer buffer
+        (when (and (not (eq buffer current-buffer))
+                   (projectile-project-root)
+                   (string-equal (projectile-project-root) project-root)
+                   (not (string-prefix-p " *Treemacs" (buffer-name buffer)))) ; Exclude Treemacs buffers
+          (kill-buffer buffer))))))
 
 ;;* exec functions
 
+
+;;* macros
+(fset 'a/window-down (kbd "L zt"))
+(fset 'q/window-up (kbd "H zb"))
 
 ;;* helm
 (defalias 'a/helm-fuzzy-file-history '+helm/workspace-mini)

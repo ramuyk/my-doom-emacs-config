@@ -11,6 +11,7 @@ First, update your system and install Emacs using Snap (Ubuntu).
 ```bash
 sudo apt update
 sudo snap install emacs --classic
+sudo apt install build-essential cmake libtool libvterm-dev # for vterm only
 ```
 
 ### Step 2: Install Doom Emacs with this Configuration
