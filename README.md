@@ -26,3 +26,16 @@ git clone https://github.com/ramuyk/my-doom-emacs-config.git ~/.doom.d
 ~/.emacs.d/bin/doom install
 ~/.emacs.d/bin/doom sync
 ```
+
+
+### Step 3: Configure Emacs Client in `.bashrc` (optional)
+
+To improve the startup time of Emacs, you can run Emacs as a daemon and open files using `emacsclient`. Add the following lines to your `.bashrc` file:
+
+```bash
+pgrep -f "emacs.*--daemon" > /dev/null
+if [ $? -ne 0 ]; then
+    emacs --daemon
+fi
+alias "emacs"='emacsclient -c -a ""'
+```

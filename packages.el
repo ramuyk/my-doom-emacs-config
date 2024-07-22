@@ -37,3 +37,4 @@
 (package! speed-type)
 (package! vimrc-mode)
 (package! flycheck)
+(package! swiper)

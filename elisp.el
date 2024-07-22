@@ -48,6 +48,8 @@
 (shortcut "SPC ," 'a/root-reopen-file)
 (shortcut "<" 'a/goto-previous-outline)
 (shortcut ">" 'a/goto-next-outline)
+(shortcut "<left>" 'a/goto-previous-outline)
+(shortcut "<right>" 'a/goto-next-outline)
 
   ;;** a
 (shortcut "a" 'a/dired-root)
@@ -59,6 +61,9 @@
 (global-set-key (kbd "C-c y") 'q/helm-copy-to-temp-buffer)
 (shortcut "b m" 'toggle-minibuffer)
 (shortcut "b k" 'q/kill-buffer-and-go-back)
+;;(shortcut "b s" 'swiper-helm)
+(shortcut "b s" 'swiper-isearch)
+(shortcut "b a" 'swiper-all)
 (shortcut "b +" 'q/make-current-file-executable)
 
   ;;** c
@@ -396,4 +401,3 @@
 (defalias 'a/helm-fuzzy-folder-content-2 'helm-rg)
 (defalias 'a/helm-fuzzy-folder-find-files 'helm-find-files)
 (defalias 'a/helm-find-file-recursively 'helm-find)
-
