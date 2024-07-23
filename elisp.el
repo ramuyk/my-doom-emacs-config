@@ -127,7 +127,8 @@
 (shortcut "p i" 'a/helm-fuzzy-project-content-rg)
 (shortcut "p k" 'a/projectile-kill-other-buffers)
 (shortcut "p p" 'a/helm-fuzzy-project-switch)
-
+(shortcut "p 1" 'a/helm-fuzzy-folder-content-1)
+(shortcut "p 2" 'a/helm-fuzzy-folder-content-2)
 
   ;;** m
 (shortcut "m m" 'magit-log-current)

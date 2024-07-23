@@ -271,9 +271,6 @@
 
 (winner-mode 1)
 
-(add-to-list 'auto-mode-alist '("\\.tsx\\'" . js-mode))
-
-
 ;;* outline
 (defvar z/outline-regexp-alist
   '(
@@ -290,6 +287,7 @@
     (typescript-mode . "\\s-*//\\*+")
     (python-mode     . "\\s-*#\\*+")
     (sql-mode        . "\\s-*\\-\\-\\s\\*+")
+    (lua-mode        . "\\s-*\\-\\-\\*+")
     (sh-mode         . "\\s-*#\\*+")
     (ruby-mode       . "\\s-*\\(#\\*+\\|\\(class\\|module\\)\\s-+\\)")
     (awk-mode        . "\\s-*#\\*+")
