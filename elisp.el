@@ -32,13 +32,48 @@
     (evil-define-key 'visual 'global (kbd "t p") 'speed-type-region)
     ))
 
+
+;;* evil shortcuts (harpoon)
+(with-eval-after-load 'evil
+  (progn
+    (evil-define-key 'normal 'global (kbd ", s") 'harpoon-toggle-quick-menu)
+    (evil-define-key 'normal 'global (kbd ", m") 'harpoon-quick-menu-hydra)
+    (evil-define-key 'normal 'global (kbd ", a") 'harpoon-add-file)
+    (evil-define-key 'normal 'global (kbd ", l") 'harpoon-toggle-file)
+    (evil-define-key 'normal 'global (kbd ", d d") 'harpoon-delete-item)
+    (evil-define-key 'normal 'global (kbd ", c") 'harpoon-clear)
+
+    (evil-define-key 'normal 'global (kbd ", 1") 'harpoon-go-to-1)
+    (evil-define-key 'normal 'global (kbd ", 2") 'harpoon-go-to-2)
+    (evil-define-key 'normal 'global (kbd ", 3") 'harpoon-go-to-3)
+    (evil-define-key 'normal 'global (kbd ", 4") 'harpoon-go-to-4)
+    (evil-define-key 'normal 'global (kbd ", 5") 'harpoon-go-to-5)
+    (evil-define-key 'normal 'global (kbd ", 6") 'harpoon-go-to-6)
+    (evil-define-key 'normal 'global (kbd ", 7") 'harpoon-go-to-7)
+    (evil-define-key 'normal 'global (kbd ", 8") 'harpoon-go-to-8)
+    (evil-define-key 'normal 'global (kbd ", 9") 'harpoon-go-to-9)
+    (evil-define-key 'normal 'global (kbd ", d 1") 'harpoon-delete-1)
+    (evil-define-key 'normal 'global (kbd ", d 2") 'harpoon-delete-2)
+    (evil-define-key 'normal 'global (kbd ", d 3") 'harpoon-delete-3)
+    (evil-define-key 'normal 'global (kbd ", d 4") 'harpoon-delete-4)
+    (evil-define-key 'normal 'global (kbd ", d 5") 'harpoon-delete-5)
+    (evil-define-key 'normal 'global (kbd ", d 6") 'harpoon-delete-6)
+    (evil-define-key 'normal 'global (kbd ", d 7") 'harpoon-delete-7)
+    (evil-define-key 'normal 'global (kbd ", d 8") 'harpoon-delete-8)
+    (evil-define-key 'normal 'global (kbd ", d 9") 'harpoon-delete-9)
+    (evil-define-key 'normal 'global (kbd ", d 9") 'harpoon-delete-9)
+
+    (evil-define-key 'normal 'global (kbd ", i") 'imenu-list)
+    (evil-define-key 'normal 'global (kbd ", ,") 'a/helm-find-gt-directories)
+    (evil-define-key 'normal 'global (kbd ", SPC") 'a/helm-find-all-gt-directories)
+    ))
 ;;* shortcuts global
 (global-set-key (kbd "C-j") 'windmove-down)
 (global-set-key (kbd "C-k") 'windmove-up)
 (global-set-key (kbd "C-l") 'windmove-right)
 (global-set-key (kbd "C-h") 'windmove-left)
 
-;;* SPC
+;;* SPC (leader key)
 
   ;;** special characters
 (shortcut "," 'a/helm-fuzzy-folder-find-files)
@@ -109,6 +144,7 @@
 (shortcut "w v" 'split-window-vertically)
 (shortcut "w w" 'winner-undo)
 (shortcut "w f" 'winner-redo)
+
 
 ;;* functions
 (defun a/open-file (path)
@@ -294,6 +330,55 @@
 	  (avy-goto-char-timer)
 	  (face-remap-remove-relative dimmed-face-remap))))
 
+
+(defun q/find-gt-directories ()
+  "Recursively find all directories in the user's home directory that contain a .git directory, ignoring node_modules, volumes, and all hidden directories except .git."
+  (let ((default-directory (expand-file-name "~/"))
+        (home (expand-file-name "~/")))
+    (message "Running find command in %s" home)
+    (let ((output (shell-command-to-string
+                   (format "find %s -type d \\( -name node_modules -o -name volumes -o -name '.*' ! -name '.git' \\) -prune -o -type d -name .git -exec dirname {} \\;" home))))
+      (message "Find command executed. Processing results.")
+      (split-string output "\n" t))))
+
+
+(defun a/helm-find-gt-directories ()
+  "Use Helm to select a directory with a .git subdirectory and open it in Dired."
+  (interactive)
+  (let ((directories (q/find-gt-directories)))
+    (message "Launching Helm with directories: %s" directories)
+    (helm :sources (helm-build-sync-source "GT Directories"
+                     :candidates directories
+                     :fuzzy-match t
+                     :action '(("Open in Dired" . (lambda (candidate)
+                                                    (message "Selected candidate: %s" candidate)
+                                                    (dired candidate)))))
+          :buffer "*helm gt directories*")))
+
+
+(defun q/find-all-gt-directories ()
+  "Recursively find all directories in the user's home directory that contain a .git directory, ignoring node_modules and volumes."
+  (let ((default-directory (expand-file-name "~/"))
+        (home (expand-file-name "~/")))
+    (message "Running find command in %s" home)
+    (let ((output (shell-command-to-string
+                   (format "find %s -type d \\( -name node_modules -o -name volumes \\) -prune -o -type d -name .git -exec dirname {} \\;" home))))
+      (message "Find command executed. Processing results.")
+      (split-string output "\n" t))))
+
+(defun a/helm-find-all-gt-directories ()
+  "Use Helm to select a directory with a .git subdirectory and open it in Dired."
+  (interactive)
+  (let ((directories (q/find-all-gt-directories)))
+    (message "Launching Helm with directories: %s" directories)
+    (helm :sources (helm-build-sync-source "GT Directories"
+                     :candidates directories
+                     :fuzzy-match t
+                     :action '(("Open in Dired" . (lambda (candidate)
+                                                    (message "Selected candidate: %s" candidate)
+                                                    (dired candidate)))))
+          :buffer "*helm gt directories*")))
+
 ;;* exec functions
 
 (defun a/execute-code ()
@@ -390,7 +475,7 @@
 (fset 'a/window-down (kbd "L zt"))
 (fset 'q/window-up (kbd "H zb"))
 
-;;* helm
+;;* aliases
 (defalias 'a/helm-fuzzy-file-history '+helm/workspace-mini)
 (defalias 'a/helm-fuzzy-open-buffers 'helm-buffers-list)
 (defalias 'a/helm-fuzzy-file-locate 'helm-for-files)

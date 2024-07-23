@@ -38,3 +38,5 @@
 (package! vimrc-mode)
 (package! flycheck)
 (package! swiper)
+(package! harpoon)
+(package! imenu-list)
