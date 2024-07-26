@@ -66,6 +66,9 @@
     (evil-define-key 'normal 'global (kbd ", i") 'imenu-list)
     (evil-define-key 'normal 'global (kbd ", ,") 'a/helm-find-gt-directories)
     (evil-define-key 'normal 'global (kbd ", SPC") 'a/helm-find-all-gt-directories)
+    (evil-define-key 'normal 'global (kbd "SPC SPC .") 'Helper-describe-bindings)
+    (evil-define-key 'normal 'global (kbd ", r") 'helm-register)
+    (evil-define-key 'normal 'global (kbd ", b") 'helm-bookmarks)
     ))
 ;;* shortcuts global
 (global-set-key (kbd "C-j") 'windmove-down)
@@ -105,7 +108,9 @@
 (shortcut "c c" 'a/execute-code)
 
   ;;** e
-(shortcut "e" 'vterm)
+(shortcut "e e" 'eshell)
+(shortcut "e v" 'vterm)
+(shortcut "e i" 'ielm)
 
   ;;** f
 (shortcut "f e d" 'a/open-file "open-config-el" (concat (getenv "HOME") "/.doom.d/config.el"))
@@ -121,6 +126,12 @@
 (shortcut "j 2" 'avy-goto-word-1)
 (shortcut "j c" 'avy-goto-char)
 (shortcut "j k" 'centaur-tabs-ace-jump)
+
+  ;;** k
+(shortcut "k k" 'helm-execute-kmacro)
+(shortcut "k n" 'name-last-kbd-macro)
+(shortcut "k i" 'insert-kbd-macro)
+(shortcut "k e" 'edit-named-kbd-macro)
 
   ;;** p
 (shortcut "p f" '+helm/projectile-find-file)
@@ -145,6 +156,12 @@
 (shortcut "w v" 'split-window-vertically)
 (shortcut "w w" 'winner-undo)
 (shortcut "w f" 'winner-redo)
+
+
+  ;;** y
+(shortcut "y" 'z/vim-yank-y)
+(shortcut "Y" 'z/vim-yank-Y)
+(shortcut "d" 'z/vim-delete-d)
 
 
 ;;* functions
@@ -380,6 +397,7 @@
                                                     (dired candidate)))))
           :buffer "*helm gt directories*")))
 
+
 ;;* exec functions
 
 (defun a/execute-code ()
@@ -393,8 +411,9 @@
      ((eq major-mode 'go-mode) (a/execute-go-code))
      ((eq major-mode 'yaml-mode) (a/execute-yaml-code))
      ((eq major-mode 'dockerfile-mode) (a/execute-yaml-code))
+     ((eq major-mode 'fundamental-mode) (a/execute-elisp-code))
      ((or (eq major-mode 'js-mode) (eq major-mode 'js2-mode) (eq major-mode 'rjsx-mode)) (a/execute-js-code))
-     ((eq major-mode 'emacs-lisp-mode) (a/execute-emacs-lisp-code))
+     ((eq major-mode 'emacs-lisp-mode) (a/execute-elisp-code))
      ((eq major-mode 'org-mode) (a/execute-org-code))
      (t (message "No execution function for major mode: %s" major-mode)))))
 
@@ -422,6 +441,11 @@
   (write-region (point-min) (point-max) "/tmp/file")
   (a/run-async-shell-command-in-split-window "docker compose up --build"))
 
+(defun a/execute-elisp-code ()
+  "Execute Docker Compose from YAML."
+  (interactive)
+  (eval-buffer))
+
 (defun a/execute-js-code ()
   "Execute JavaScript code."
   (interactive)
@@ -431,11 +455,11 @@
                      "~/node_modules")))
     (a/run-async-shell-command-in-split-window (concat "NODE_PATH=" node-path " node /tmp/file"))))
 
-(defun a/execute-emacs-lisp-code ()
-  "Execute Emacs Lisp code."
-  (interactive)
-  (save-buffer)
-  (a/run-async-shell-command-in-split-window (concat "emacs --batch --script " buffer-file-name)))
+;; (defun a/execute-emacs-lisp-code ()
+;;   "Execute Emacs Lisp code."
+;;   (interactive)
+;;   (save-buffer)
+;;   (a/run-async-shell-command-in-split-window (concat "emacs --batch --script " buffer-file-name)))
 
 (defun a/execute-org-code ()
   "Execute Org Babel code."
@@ -472,9 +496,17 @@
         (goto-char point))
     (message "Buffer is not visiting a file!")))
 
-;;* macros
+;;* kbd macros
 (fset 'a/window-down (kbd "L zt"))
 (fset 'q/window-up (kbd "H zb"))
+
+(fset 'z/vim-yank-y (kbd "[[\"+y]]"))
+(fset 'z/vim-yank-Y (kbd "[[\"+Y]]"))
+(fset 'z/vim-delete-d (kbd "[[\"_d]]"))
+
+;;* kmacros
+
+
 
 ;;* aliases
 (defalias 'a/helm-fuzzy-file-history '+helm/workspace-mini)

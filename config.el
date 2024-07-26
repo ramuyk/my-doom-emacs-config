@@ -270,6 +270,7 @@
                            (set-popup-rule! "^\\*helm" :size 0.99 :vslot -4 :select t :quit t :ttl nil))))
 
 (winner-mode 1)
+(add-to-list 'auto-mode-alist '("\\.prisma\\'" . js-mode))
 
 ;;* outline
 (defvar z/outline-regexp-alist
