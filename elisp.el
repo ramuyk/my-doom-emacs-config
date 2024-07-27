@@ -103,6 +103,7 @@
 (shortcut "b s" 'swiper-isearch)
 (shortcut "b a" 'swiper-all)
 (shortcut "b +" 'q/make-current-file-executable)
+(shortcut "b p" 'a/helm-fuzzy-project-switch)
 
   ;;** c
 (shortcut "c c" 'a/execute-code)
