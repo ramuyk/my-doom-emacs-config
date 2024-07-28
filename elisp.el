@@ -84,10 +84,13 @@
 (shortcut "SPC 1" 'delete-other-windows)
 (shortcut "SPC 0" 'delete-window)
 (shortcut "SPC ," 'a/root-reopen-file)
+(shortcut "SPC SPC ." 'helm-apropos)
 (shortcut "<" 'a/goto-previous-outline)
 (shortcut ">" 'a/goto-next-outline)
 (shortcut "<left>" 'a/goto-previous-outline)
 (shortcut "<right>" 'a/goto-next-outline)
+(shortcut "/" 'swiper-isearch)
+(shortcut "SPC /" 'swiper-all)
 
   ;;** a
 (shortcut "a" 'a/dired-root)
@@ -120,6 +123,10 @@
 (shortcut "f e p" 'a/open-file "open-packages-el" (concat (getenv "HOME") "/.doom.d/packages.el"))
 (shortcut "f e r" 'a/open-file "open-packages-el" (concat (getenv "HOME") "/.doom.d/README.md"))
 
+(shortcut "f v d" 'a/open-file "open-config-el" (concat (getenv "HOME") "/.config/nvim/init.lua"))
+(shortcut "f v m" 'a/open-file "open-elisp-el" (concat (getenv "HOME") "/.config/nvim/lua/myconfig.lua"))
+(shortcut "f v r" 'a/open-file "open-packages-el" (concat (getenv "HOME") "/.config/nvim/README.md"))
+
   ;;** j
 (shortcut "j j" 'a/avy-goto-char-timer-dim-screen)
 (shortcut "j l" 'avy-goto-line)
@@ -147,6 +154,7 @@
 (shortcut "m f" 'magit-log-buffer-file)
 (shortcut "m r" 'magit-refresh)
 (shortcut "m l" 'magit-pull)
+(shortcut "m c" 'magit-checkout)
 
   ;;** h
 (shortcut "h l" 'clm/open-command-log-buffer)
