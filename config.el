@@ -272,6 +272,16 @@
 (winner-mode 1)
 (add-to-list 'auto-mode-alist '("\\.prisma\\'" . js-mode))
 
+;; Enable mouse support in terminal Emacs
+;; (require 'mouse)
+;; (xterm-mouse-mode t)
+
+;; ;; Enable scrolling with the mouse wheel
+;; (global-set-key [mouse-4] '(lambda () (interactive) (scroll-down 1)))
+;; (global-set-key [mouse-5] '(lambda () (interactive) (scroll-up 1)))
+
+;; ;; Optional: Enable mouse drag and drop
+;; (setq mouse-drag-copy-region t)
 ;;* outline
 (defvar z/outline-regexp-alist
   '(

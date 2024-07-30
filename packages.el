@@ -40,3 +40,4 @@
 (package! swiper)
 (package! harpoon)
 (package! imenu-list)
+;;(package! mouse)

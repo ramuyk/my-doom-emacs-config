@@ -8,9 +8,15 @@
 (with-eval-after-load 'helm-files
   (define-key helm-find-files-map (kbd "^") 'helm-find-files-up-one-level))
 
+
+;; Unbind Shift+Tab in org-mode to prevent conflicts
+(with-eval-after-load 'org
+  (define-key org-mode-map (kbd "<S-iso-lefttab>") nil))
+
 (with-eval-after-load 'evil
   (progn
     (evil-define-key 'insert 'global (kbd "<S-iso-lefttab>") 'q/go-to-column-50)
+    (evil-define-key 'insert 'global (kbd "<S-<tab>") 'q/go-to-column-50)
     (evil-define-key 'normal 'global (kbd "<down>") 'a/window-down)
     (evil-define-key 'normal 'global (kbd "<up>") 'q/window-up)
     (evil-define-key 'normal 'global (kbd "<left>") 'centaur-tabs-backward)
@@ -65,6 +71,9 @@
 
     (evil-define-key 'normal 'global (kbd ", i") 'imenu-list)
     (evil-define-key 'normal 'global (kbd ", ,") 'a/helm-find-gt-directories)
+    (evil-define-key 'normal 'global (kbd "SPC 1 2") 'a/helm-find-gt-directories)
+    (evil-define-key 'normal 'global (kbd "SPC 1 3") 'a/helm-find-all-gt-directories)
+    (evil-define-key 'normal 'global (kbd "SPC 1 4") 'a/helm-find-github-directories)
     (evil-define-key 'normal 'global (kbd ", SPC") 'a/helm-find-all-gt-directories)
     (evil-define-key 'normal 'global (kbd "SPC SPC .") 'Helper-describe-bindings)
     (evil-define-key 'normal 'global (kbd ", r") 'helm-register)
@@ -75,15 +84,19 @@
 (global-set-key (kbd "C-k") 'windmove-up)
 (global-set-key (kbd "C-l") 'windmove-right)
 (global-set-key (kbd "C-h") 'windmove-left)
+(global-set-key (kbd "C-c l") 'q/go-to-column-50)
+
+;; (evil-define-key 'insert 'global (kbd "C-c l") 'q/go-to-column-50)
 
 ;;* SPC (leader key)
 
   ;;** special characters
 (shortcut "," 'a/helm-fuzzy-folder-find-files)
+(shortcut "SPC ," 'helm-find)
+(shortcut "SPC SPC ," 'a/root-reopen-file)
 (shortcut "." 'helm-M-x)
 (shortcut "SPC 1" 'delete-other-windows)
 (shortcut "SPC 0" 'delete-window)
-(shortcut "SPC ," 'a/root-reopen-file)
 (shortcut "SPC SPC ." 'helm-apropos)
 (shortcut "<" 'a/goto-previous-outline)
 (shortcut ">" 'a/goto-next-outline)
@@ -106,15 +119,20 @@
 (shortcut "b s" 'swiper-isearch)
 (shortcut "b a" 'swiper-all)
 (shortcut "b +" 'q/make-current-file-executable)
-(shortcut "b p" 'a/helm-fuzzy-project-switch)
+(shortcut "b p" '+helm/projectile-find-file)
 
   ;;** c
 (shortcut "c c" 'a/execute-code)
 
   ;;** e
-(shortcut "e e" 'eshell)
-(shortcut "e v" 'vterm)
+;; (shortcut "e e" 'eshell)
+;; (shortcut "e v" 'vterm)
+(shortcut "e e" 'projectile-run-eshell)
+(shortcut "e b" 'projectile-ibuffer)
+(shortcut "e d" 'projectile-dired)
+(shortcut "e v" 'projectile-run-vterm)
 (shortcut "e i" 'ielm)
+
 
   ;;** f
 (shortcut "f e d" 'a/open-file "open-config-el" (concat (getenv "HOME") "/.doom.d/config.el"))
@@ -150,10 +168,11 @@
 (shortcut "p 2" 'a/helm-fuzzy-folder-content-2)
 
   ;;** m
+(shortcut "m 1" 'magit-status)
 (shortcut "m m" 'magit-log-current)
 (shortcut "m f" 'magit-log-buffer-file)
 (shortcut "m r" 'magit-refresh)
-(shortcut "m l" 'magit-pull)
+;;(shortcut "m l" 'magit-pull)
 (shortcut "m c" 'magit-checkout)
 
   ;;** h
@@ -382,6 +401,30 @@
                                                     (dired candidate)))))
           :buffer "*helm gt directories*")))
 
+
+(defun q/find-github-directories ()
+  "Recursively find all directories in the user's home directory that contain a .git directory, ignoring node_modules, volumes, and all hidden directories except .git."
+  (let ((default-directory (expand-file-name "/data/github/"))
+        (home (expand-file-name "/data/github/")))
+    (message "Running find command in %s" home)
+    (let ((output (shell-command-to-string
+                   (format "find %s -type d \\( -name node_modules -o -name volumes -o -name '.*' ! -name '.git' \\) -prune -o -type d -name .git -exec dirname {} \\;" home))))
+      (message "Find command executed. Processing results.")
+      (split-string output "\n" t))))
+
+
+(defun a/helm-find-github-directories ()
+  "Use Helm to select a directory with a .git subdirectory and open it in Dired."
+  (interactive)
+  (let ((directories (q/find-github-directories)))
+    (message "Launching Helm with directories: %s" directories)
+    (helm :sources (helm-build-sync-source "GT Directories"
+                     :candidates directories
+                     :fuzzy-match t
+                     :action '(("Open in Dired" . (lambda (candidate)
+                                                    (message "Selected candidate: %s" candidate)
+                                                    (dired candidate)))))
+          :buffer "*helm gt directories*")))
 
 (defun q/find-all-gt-directories ()
   "Recursively find all directories in the user's home directory that contain a .git directory, ignoring node_modules and volumes."
