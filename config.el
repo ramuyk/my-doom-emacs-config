@@ -282,6 +282,8 @@
 
 ;; ;; Optional: Enable mouse drag and drop
 ;; (setq mouse-drag-copy-region t)
+(setq x-select-enable-clipboard t)
+
 ;;* outline
 (defvar z/outline-regexp-alist
   '(

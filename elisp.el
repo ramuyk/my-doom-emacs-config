@@ -461,6 +461,7 @@
      ((eq major-mode 'sh-mode) (a/execute-bash-code))
      ((eq major-mode 'python-mode) (a/execute-python-code))
      ((eq major-mode 'go-mode) (a/execute-go-code))
+     ((eq major-mode 'lua-mode) (a/execute-lua-code))
      ((eq major-mode 'yaml-mode) (a/execute-yaml-code))
      ((eq major-mode 'dockerfile-mode) (a/execute-yaml-code))
      ((eq major-mode 'fundamental-mode) (a/execute-elisp-code))
@@ -480,6 +481,12 @@
   (interactive)
   (write-region (point-min) (point-max) "/tmp/file")
   (a/run-async-shell-command-in-split-window "python3 /tmp/file"))
+
+(defun a/execute-lua-code ()
+  "Execute Python code."
+  (interactive)
+  (write-region (point-min) (point-max) "/tmp/file")
+  (a/run-async-shell-command-in-split-window "lua /tmp/file"))
 
 (defun a/execute-go-code ()
   "Execute Go code."
