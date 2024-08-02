@@ -17,8 +17,8 @@
   (progn
     (evil-define-key 'insert 'global (kbd "<S-iso-lefttab>") 'q/go-to-column-50)
     (evil-define-key 'insert 'global (kbd "<S-<tab>") 'q/go-to-column-50)
-    (evil-define-key 'normal 'global (kbd "<down>") 'a/window-down)
-    (evil-define-key 'normal 'global (kbd "<up>") 'q/window-up)
+    (evil-define-key 'normal 'global (kbd "<down>") 'z/window-down)
+    (evil-define-key 'normal 'global (kbd "<up>") 'z/window-up)
     (evil-define-key 'normal 'global (kbd "<left>") 'centaur-tabs-backward)
     (evil-define-key 'normal 'global (kbd "<right>") 'centaur-tabs-forward)
     (evil-define-key 'normal 'global (kbd "C-<left>") 'previous-buffer)
@@ -71,9 +71,9 @@
 
     (evil-define-key 'normal 'global (kbd ", i") 'imenu-list)
     (evil-define-key 'normal 'global (kbd ", ,") 'a/helm-find-gt-directories)
+    (evil-define-key 'normal 'global (kbd "SPC 1 1") 'a/helm-find-github-directories)
     (evil-define-key 'normal 'global (kbd "SPC 1 2") 'a/helm-find-gt-directories)
     (evil-define-key 'normal 'global (kbd "SPC 1 3") 'a/helm-find-all-gt-directories)
-    (evil-define-key 'normal 'global (kbd "SPC 1 4") 'a/helm-find-github-directories)
     (evil-define-key 'normal 'global (kbd ", SPC") 'a/helm-find-all-gt-directories)
     (evil-define-key 'normal 'global (kbd "SPC SPC .") 'Helper-describe-bindings)
     (evil-define-key 'normal 'global (kbd ", r") 'helm-register)
@@ -107,6 +107,7 @@
 
   ;;** a
 (shortcut "a" 'a/dired-root)
+(shortcut "SPC a" 'projectile-dired)
 
   ;;** b
 (shortcut "b b" 'a/helm-fuzzy-open-buffers)
@@ -404,8 +405,8 @@
 
 (defun q/find-github-directories ()
   "Recursively find all directories in the user's home directory that contain a .git directory, ignoring node_modules, volumes, and all hidden directories except .git."
-  (let ((default-directory (expand-file-name "/data/github/"))
-        (home (expand-file-name "/data/github/")))
+  (let ((default-directory (expand-file-name "/home/Dados/GitHub/"))
+        (home (expand-file-name "/home/Dados/GitHub/")))
     (message "Running find command in %s" home)
     (let ((output (shell-command-to-string
                    (format "find %s -type d \\( -name node_modules -o -name volumes -o -name '.*' ! -name '.git' \\) -prune -o -type d -name .git -exec dirname {} \\;" home))))
@@ -556,8 +557,9 @@
     (message "Buffer is not visiting a file!")))
 
 ;;* kbd macros
-(fset 'a/window-down (kbd "L zt"))
-(fset 'q/window-up (kbd "H zb"))
+(fset 'z/window-down (kbd "L zt"))
+(fset 'z/window-up (kbd "H zb"))
+;; (fset 'z/window-quit (kbd " bk wk"))
 
 (fset 'z/vim-yank-y (kbd "[[\"+y]]"))
 (fset 'z/vim-yank-Y (kbd "[[\"+Y]]"))

@@ -34,6 +34,8 @@
 
 (package! centaur-tabs)
 (package! command-log-mode)
+(package! yasnippet)
+(package! yasnippet-snippets)
 (package! speed-type)
 (package! vimrc-mode)
 (package! flycheck)
