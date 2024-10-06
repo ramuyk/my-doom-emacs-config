@@ -86,6 +86,9 @@
 (global-set-key (kbd "C-h") 'windmove-left)
 (global-set-key (kbd "C-c l") 'q/go-to-column-50)
 
+(map! :v "<" #'evil-shift-left
+      :v ">" #'evil-shift-right)
+
 ;; (evil-define-key 'insert 'global (kbd "C-c l") 'q/go-to-column-50)
 
 ;;* SPC (leader key)
