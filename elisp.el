@@ -145,9 +145,9 @@
 (shortcut "f e p" 'a/open-file "open-packages-el" (concat (getenv "HOME") "/.doom.d/packages.el"))
 (shortcut "f e r" 'a/open-file "open-packages-el" (concat (getenv "HOME") "/.doom.d/README.md"))
 
-(shortcut "f v d" 'a/open-file "open-config-el" (concat (getenv "HOME") "/.config/nvim/init.lua"))
-(shortcut "f v m" 'a/open-file "open-elisp-el" (concat (getenv "HOME") "/.config/nvim/lua/myconfig.lua"))
-(shortcut "f v r" 'a/open-file "open-packages-el" (concat (getenv "HOME") "/.config/nvim/README.md"))
+(shortcut "f n d" 'a/open-file "open-config-el" (concat (getenv "HOME") "/.config/nvim/init.lua"))
+(shortcut "f n m" 'a/open-file "open-elisp-el" (concat (getenv "HOME") "/.config/nvim/lua/myconfig.lua"))
+(shortcut "f n r" 'a/open-file "open-packages-el" (concat (getenv "HOME") "/.config/nvim/README.md"))
 
   ;;** j
 (shortcut "j j" 'a/avy-goto-char-timer-dim-screen)
