@@ -92,8 +92,8 @@
 
   ;;** special characters
 (shortcut "," 'a/helm-fuzzy-folder-find-files)
-(shortcut "SPC ," 'helm-find)
-(shortcut "SPC SPC ," 'a/root-reopen-file)
+(shortcut "SPC ," 'helm-projectile)
+(shortcut "SPC SPC ," 'helm-find)
 (shortcut "." 'helm-M-x)
 (shortcut "SPC 1" 'delete-other-windows)
 (shortcut "SPC 0" 'delete-window)
@@ -104,6 +104,9 @@
 (shortcut "<right>" 'a/goto-next-outline)
 (shortcut "/" 'swiper-isearch)
 (shortcut "SPC /" 'swiper-all)
+
+  ;;** 0
+(shortcut "0 0" 'a/root-reopen-file)
 
   ;;** a
 (shortcut "a" 'a/dired-root)
@@ -162,6 +165,7 @@
 
   ;;** p
 (shortcut "p f" '+helm/projectile-find-file)
+(shortcut "p d" 'projectile-find-dir)
 (shortcut "p i" 'a/helm-fuzzy-project-content-rg)
 (shortcut "p k" 'a/projectile-kill-other-buffers)
 (shortcut "p p" 'a/helm-fuzzy-project-switch)
@@ -178,6 +182,9 @@
 
   ;;** h
 (shortcut "h l" 'clm/open-command-log-buffer)
+
+  ;;** t
+(shortcut "t t" 'q/treemacs-toggle)
 
   ;;** w
 (shortcut "w k" 'delete-window)
@@ -450,6 +457,27 @@
                                                     (dired candidate)))))
           :buffer "*helm gt directories*")))
 
+(defun q/treemacs-toggle ()
+  "Toggle Treemacs buffer.
+If Treemacs is not visible, display the current project exclusively.
+If Treemacs is visible, just hide it."
+  (interactive)
+  (let ((current-buffer (current-buffer))
+        (projectile-root (directory-file-name
+                          (or (when (vc-root-dir) (vc-root-dir))
+                              (when (projectile-project-root) (projectile-project-root))))))
+    (message "Projectile root: %s" projectile-root)
+    (if (treemacs-get-local-window)
+        ;; If Treemacs is visible, just close it
+        (progn
+          (message "Treemacs is visible, hiding it")
+          (treemacs))
+      ;; If Treemacs is not visible, show the current project
+      (progn
+        (message "Treemacs not visible, showing current project")
+        (treemacs-add-and-display-current-project-exclusively)
+        (treemacs-toggle-fixed-width)))
+    (switch-to-buffer current-buffer)))
 
 ;;* exec functions
 

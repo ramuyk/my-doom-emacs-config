@@ -153,6 +153,8 @@
   (setq projectile-globally-ignored-files (append '("*.min.js" "*.bundle.js" "*.min.css" "pnpm-lock.json")
                                                   projectile-globally-ignored-files)))
 
+(use-package! xclip :config (xclip-mode 1))
+
 (use-package! speed-type
   :commands (speed-type-text speed-type-region)
 )
@@ -185,6 +187,12 @@
   :config
         (global-command-log-mode)
 )
+
+(use-package! treemacs
+  :config
+        (setq treemacs-show-hidden-files nil)
+        (treemacs-follow-mode 1)
+  )
 
 ;;* shortcut function
 (defun shortcut (shortcut command &optional name &rest args)
@@ -273,16 +281,18 @@
 (add-to-list 'auto-mode-alist '("\\.prisma\\'" . js-mode))
 
 ;; Enable mouse support in terminal Emacs
-;; (require 'mouse)
-;; (xterm-mouse-mode t)
+(require 'mouse)
+(xterm-mouse-mode t)
 
 ;; ;; Enable scrolling with the mouse wheel
-;; (global-set-key [mouse-4] '(lambda () (interactive) (scroll-down 1)))
-;; (global-set-key [mouse-5] '(lambda () (interactive) (scroll-up 1)))
+(global-set-key [mouse-4] '(lambda () (interactive) (scroll-down 1)))
+(global-set-key [mouse-5] '(lambda () (interactive) (scroll-up 1)))
 
 ;; ;; Optional: Enable mouse drag and drop
 ;; (setq mouse-drag-copy-region t)
 (setq x-select-enable-clipboard t)
+
+;; (use-package! xclip :ensure t :config (xclip-mode 1))
 
 ;;* outline
 (defvar z/outline-regexp-alist
