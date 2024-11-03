@@ -153,7 +153,7 @@
   (setq projectile-globally-ignored-files (append '("*.min.js" "*.bundle.js" "*.min.css" "pnpm-lock.json")
                                                   projectile-globally-ignored-files)))
 
-(use-package! xclip :config (xclip-mode 1))
+;; (use-package! xclip :config (xclip-mode 1))
 
 (use-package! speed-type
   :commands (speed-type-text speed-type-region)
@@ -290,7 +290,7 @@
 
 ;; ;; Optional: Enable mouse drag and drop
 ;; (setq mouse-drag-copy-region t)
-(setq x-select-enable-clipboard t)
+;; (setq x-select-enable-clipboard t)
 
 ;; (use-package! xclip :ensure t :config (xclip-mode 1))
 

@@ -152,10 +152,13 @@
 (shortcut "f n m" 'a/open-file "open-elisp-el" (concat (getenv "HOME") "/.config/nvim/lua/myconfig.lua"))
 (shortcut "f n r" 'a/open-file "open-packages-el" (concat (getenv "HOME") "/.config/nvim/README.md"))
 
+(shortcut "f t d" 'a/open-file "open-packages-el" (concat (getenv "HOME") "/.config/tmux/tmux.conf"))
+(shortcut "f t m" 'a/open-file "open-packages-el" (concat (getenv "HOME") "/.config/tmux/xbindkeysrc"))
+
   ;;** j
-(shortcut "j j" 'a/avy-goto-char-timer-dim-screen)
+(shortcut "j w" 'a/avy-goto-char-timer-dim-screen)
 (shortcut "j l" 'avy-goto-line)
-(shortcut "j w" 'avy-goto-word-or-subword-1)
+(shortcut "j j" 'avy-goto-word-or-subword-1)
 (shortcut "j 2" 'avy-goto-word-1)
 (shortcut "j c" 'avy-goto-char)
 (shortcut "j k" 'centaur-tabs-ace-jump)
