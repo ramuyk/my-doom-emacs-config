@@ -158,14 +158,7 @@
   :commands (speed-type-text speed-type-region)
 )
 
-(use-package! dired+
-  :load-path "~/.doom.d/external"
-  :init
-  (setq dired-hide-details-hide-symlink-targets t)
-  :config
-  (require 'dired+)
-  (add-hook 'dired-mode-hook 'dired-hide-details-mode))
-
+(add-hook 'dired-mode-hook (lambda () (dired-hide-details-mode 1)))
 
 (use-package! centaur-tabs
   :config
