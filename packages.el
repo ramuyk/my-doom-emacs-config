@@ -42,6 +42,6 @@
 (package! swiper)
 (package! harpoon)
 (package! imenu-list)
-;; (package! xclip)
+(package! xclip)
 
 ;;(package! mouse)

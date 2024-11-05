@@ -97,6 +97,7 @@
 (shortcut "," 'a/helm-fuzzy-folder-find-files)
 (shortcut "SPC ," 'helm-projectile)
 (shortcut "SPC SPC ," 'helm-find)
+(shortcut "SPC SPC SPC ," 'helpful-variable)
 (shortcut "." 'helm-M-x)
 (shortcut "SPC 1" 'delete-other-windows)
 (shortcut "SPC 0" 'delete-window)

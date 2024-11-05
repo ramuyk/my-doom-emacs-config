@@ -153,7 +153,6 @@
   (setq projectile-globally-ignored-files (append '("*.min.js" "*.bundle.js" "*.min.css" "pnpm-lock.json")
                                                   projectile-globally-ignored-files)))
 
-;; (use-package! xclip :config (xclip-mode 1))
 
 (use-package! speed-type
   :commands (speed-type-text speed-type-region)
@@ -275,7 +274,7 @@
   (add-to-list 'helm-boring-file-regexp-list "\\`\\.[^/]") ;; skip files beginning with .
   (run-with-timer 2 nil (lambda ()
                            ;; (set-popup-rule! "^\\*helm" :size 0.99 :vslot -4 :select t :quit t :ttl nil))))
-                           (set-popup-rule! "^\\*helm" :size 0.99 :vslot -4 :select t :quit t :ttl nil))))
+                           (set-popup-rule! "^\\*helm" :size 0.50 :vslot -4 :select t :quit t :ttl nil))))
 
 (winner-mode 1)
 (add-to-list 'auto-mode-alist '("\\.prisma\\'" . js-mode))
@@ -292,7 +291,7 @@
 ;; (setq mouse-drag-copy-region t)
 ;; (setq x-select-enable-clipboard t)
 
-;; (use-package! xclip :ensure t :config (xclip-mode 1))
+(use-package! xclip :config (xclip-mode 1))
 
 ;;* outline
 (defvar z/outline-regexp-alist
