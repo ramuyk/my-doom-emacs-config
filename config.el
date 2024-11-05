@@ -284,7 +284,7 @@
 ;; (setq mouse-drag-copy-region t)
 ;; (setq x-select-enable-clipboard t)
 
-(use-package! xclip :config (xclip-mode 1))
+;;(use-package! xclip :config (xclip-mode 1))
 
 ;;* outline
 (defvar z/outline-regexp-alist
