@@ -323,7 +323,7 @@
   (let ((str (match-string 0)))
     (cl-count ?* str)))
 
-(defun z/debug-ruby-outline ()
+(defun q/debug-ruby-outline ()
   "Debug function to manually set outline-regexp for Ruby mode."
   (interactive)
   (setq-local outline-regexp "\\s-*\\(#\\*+\\|\\(class\\|module\\)\\s-+\\)")

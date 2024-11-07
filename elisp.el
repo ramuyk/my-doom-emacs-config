@@ -112,6 +112,9 @@
   ;;** 0
 (shortcut "0 0" 'a/root-reopen-file)
 
+  ;;** 0
+(shortcut "9 9" 'a/macro-repeat)
+
   ;;** a
 (shortcut "a" 'a/dired-root)
 (shortcut "SPC a" 'projectile-dired)
@@ -486,6 +489,24 @@ If Treemacs is visible, just hide it."
         (treemacs-toggle-fixed-width)))
     (switch-to-buffer current-buffer)))
 
+(defun a/macro-repeat (command count)
+  "Repeat a command multiple times.
+Prompts for a command that starts with 'z/' and the number of repetitions."
+  (interactive
+   (list
+    (intern
+     (completing-read "Command to repeat (starting with 'z/'): "
+                      obarray
+                      (lambda (cmd)
+                        (and (commandp cmd)
+                             (string-prefix-p "z/" (symbol-name cmd))))
+                      t))
+    (read-number "Repeat count: ")))
+  (dotimes (_ count)
+    (call-interactively command)))
+
+
+
 ;;* exec functions
 
 (defun a/execute-code ()
@@ -599,6 +620,9 @@ If Treemacs is visible, just hide it."
 (fset 'z/vim-yank-y (kbd "[[\"+y]]"))
 (fset 'z/vim-yank-Y (kbd "[[\"+Y]]"))
 (fset 'z/vim-delete-d (kbd "[[\"_d]]"))
+
+(defalias 'z/dired-magit-pull
+   (kmacro "<return> SPC m m F u q h j"))
 
 ;;* kmacros
 
