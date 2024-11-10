@@ -523,6 +523,7 @@ Prompts for a command that starts with 'z/' and the number of repetitions."
      ((eq major-mode 'dockerfile-mode) (a/execute-yaml-code))
      ((eq major-mode 'fundamental-mode) (a/execute-elisp-code))
      ((or (eq major-mode 'js-mode) (eq major-mode 'js2-mode) (eq major-mode 'rjsx-mode)) (a/execute-js-code))
+     ((eq major-mode 'typescript-mode) (a/execute-ts-code))
      ((eq major-mode 'emacs-lisp-mode) (a/execute-elisp-code))
      ((eq major-mode 'org-mode) (a/execute-org-code))
      (t (message "No execution function for major mode: %s" major-mode)))))
@@ -562,20 +563,27 @@ Prompts for a command that starts with 'z/' and the number of repetitions."
   (interactive)
   (eval-buffer))
 
-(defun a/execute-js-code ()
-  "Execute JavaScript code."
+(defun a/execute-ts-code ()
+  "Execute TypeScript code."
   (interactive)
-  (write-region (point-min) (point-max) "/tmp/file")
-  (let ((node-path (if (projectile-project-p)
+  (message "passing typescript")
+  (write-region (point-min) (point-max) "/tmp/file.ts")
+  (let ((node-path (if (and (projectile-project-p)
+                            (not (string-prefix-p (expand-file-name "~/.config/tmux") (or (buffer-file-name) ""))))
                        (projectile-project-root)
-                     "~/node_modules")))
-    (a/run-async-shell-command-in-split-window (concat "NODE_PATH=" node-path " node /tmp/file"))))
+                     "/usr/local/lib/node_modules")))
+    (a/run-async-shell-command-in-split-window (concat "NODE_PATH=" node-path " tsx /tmp/file.ts"))))
 
-;; (defun a/execute-emacs-lisp-code ()
-;;   "Execute Emacs Lisp code."
-;;   (interactive)
-;;   (save-buffer)
-;;   (a/run-async-shell-command-in-split-window (concat "emacs --batch --script " buffer-file-name)))
+(defun a/execute-ts-code ()
+  "Execute TypeScript code."
+  (interactive)
+  (message "passing typescript")
+  (write-region (point-min) (point-max) "/tmp/file.ts")
+  (let ((node-path (if (and (projectile-project-p)
+                            (not (string-prefix-p (expand-file-name "~/.config/tmux") (or (buffer-file-name) ""))))
+                       (projectile-project-root)
+                     "/usr/local/lib/node_modules")))
+    (a/run-async-shell-command-in-split-window (concat "NODE_PATH=" node-path " tsx /tmp/file.ts"))))
 
 (defun a/execute-org-code ()
   "Execute Org Babel code."
@@ -588,19 +596,15 @@ Prompts for a command that starts with 'z/' and the number of repetitions."
 
 (defun a/run-async-shell-command-in-split-window (code)
   "Run async shell command in a split window."
-  (let ((current-window (selected-window)))
-    (unless (and execute-code-output-window (window-live-p execute-code-output-window))
-      (setq execute-code-output-window (split-window-horizontally))
-      (select-window execute-code-output-window)
-      (window-swap-states current-window execute-code-output-window)
-      (select-window current-window))
-    (with-selected-window execute-code-output-window
-      (switch-to-buffer (get-buffer-create "*Async Shell Command*"))
-      (let ((process (get-buffer-process (current-buffer))))
+  (let ((output-buffer (get-buffer-create "*Async Shell Command*")))
+    ;; Ensure output buffer is in a split window
+    (display-buffer output-buffer '(display-buffer-pop-up-window . ((inhibit-same-window . t))))
+    ;; Switch to output buffer and run command
+    (with-current-buffer output-buffer
+      (let ((process (get-buffer-process output-buffer)))
         (when process
           (delete-process process)))
-      (async-shell-command code))
-    (select-window current-window)))
+      (async-shell-command code output-buffer))))
 
 ;;* root functions
 (defun a/root-reopen-file ()
