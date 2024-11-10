@@ -42,11 +42,11 @@
 ;;* evil shortcuts (harpoon)
 (with-eval-after-load 'evil
   (progn
-    (evil-define-key 'normal 'global (kbd ", s") 'harpoon-toggle-quick-menu)
-    (evil-define-key 'normal 'global (kbd ", m") 'harpoon-quick-menu-hydra)
+    (evil-define-key 'normal harpoon-mode-map (kbd "q") 'q/harpoon-close-buffer)
+    (evil-define-key 'normal harpoon-mode-map (kbd "RET") 'harpoon-find-file)
+    (evil-define-key 'normal 'global (kbd ", ,") 'harpoon-toggle-file)
+    (evil-define-key 'normal 'global (kbd ", .") 'harpoon-toggle-quick-menu)
     (evil-define-key 'normal 'global (kbd ", a") 'harpoon-add-file)
-    (evil-define-key 'normal 'global (kbd ", l") 'harpoon-toggle-file)
-    (evil-define-key 'normal 'global (kbd ", d d") 'harpoon-delete-item)
     (evil-define-key 'normal 'global (kbd ", c") 'harpoon-clear)
 
     (evil-define-key 'normal 'global (kbd ", 1") 'harpoon-go-to-1)
@@ -58,23 +58,14 @@
     (evil-define-key 'normal 'global (kbd ", 7") 'harpoon-go-to-7)
     (evil-define-key 'normal 'global (kbd ", 8") 'harpoon-go-to-8)
     (evil-define-key 'normal 'global (kbd ", 9") 'harpoon-go-to-9)
-    (evil-define-key 'normal 'global (kbd ", d 1") 'harpoon-delete-1)
-    (evil-define-key 'normal 'global (kbd ", d 2") 'harpoon-delete-2)
-    (evil-define-key 'normal 'global (kbd ", d 3") 'harpoon-delete-3)
-    (evil-define-key 'normal 'global (kbd ", d 4") 'harpoon-delete-4)
-    (evil-define-key 'normal 'global (kbd ", d 5") 'harpoon-delete-5)
-    (evil-define-key 'normal 'global (kbd ", d 6") 'harpoon-delete-6)
-    (evil-define-key 'normal 'global (kbd ", d 7") 'harpoon-delete-7)
-    (evil-define-key 'normal 'global (kbd ", d 8") 'harpoon-delete-8)
-    (evil-define-key 'normal 'global (kbd ", d 9") 'harpoon-delete-9)
-    (evil-define-key 'normal 'global (kbd ", d 9") 'harpoon-delete-9)
+
 
     (evil-define-key 'normal 'global (kbd ", i") 'imenu-list)
-    (evil-define-key 'normal 'global (kbd ", ,") 'a/helm-find-gt-directories)
+    ;; (evil-define-key 'normal 'global (kbd ", ,") 'a/helm-find-gt-directories)
     (evil-define-key 'normal 'global (kbd "SPC 1 1") 'a/helm-find-github-directories)
     (evil-define-key 'normal 'global (kbd "SPC 1 2") 'a/helm-find-gt-directories)
     (evil-define-key 'normal 'global (kbd "SPC 1 3") 'a/helm-find-all-gt-directories)
-    (evil-define-key 'normal 'global (kbd ", SPC") 'a/helm-find-all-gt-directories)
+    ;; (evil-define-key 'normal 'global (kbd ", SPC") 'a/helm-find-all-gt-directories)
     (evil-define-key 'normal 'global (kbd "SPC SPC .") 'Helper-describe-bindings)
     (evil-define-key 'normal 'global (kbd ", r") 'helm-register)
     (evil-define-key 'normal 'global (kbd ", b") 'helm-bookmarks)
@@ -505,7 +496,11 @@ Prompts for a command that starts with 'z/' and the number of repetitions."
   (dotimes (_ count)
     (call-interactively command)))
 
-
+(defun q/harpoon-close-buffer ()
+  "Close the Harpoon buffer without selecting a file."
+  (interactive)
+  (when (eq major-mode 'harpoon-mode)
+    (kill-buffer)))
 
 ;;* exec functions
 
