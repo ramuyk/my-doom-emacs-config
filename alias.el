@@ -1,4 +1,6 @@
-;;* my
+;;; alias.el -*- lexical-binding: t; -*-
+
+;; my
   ;;* aliases
 (a/defalias alias/refresh-docstrings a/alias-refresh-docstrings alias)
 

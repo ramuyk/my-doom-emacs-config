@@ -186,9 +186,9 @@
         (treemacs-follow-mode 1)
   )
 
-;;(use-package! gptel
-;;  :config
-;;  (setq! gptel-backend (gptel-make-gh-copilot "Copilot")))
+(use-package! gptel
+ :config
+ (setq! gptel-backend (gptel-make-gh-copilot "Copilot")))
   ;;(setq! gptel-api-key (getenv "GPT_API")))
 
 ;;(gptel-make-gh-copilot "Copilot")
@@ -202,17 +202,34 @@
          ("C-<tab>" . 'copilot-accept-completion-by-word)))
 
 ;;* shortcut function
+;; (defun shortcut (shortcut command &optional name &rest args)
+;;   "Create a custom shortcut in Doom Emacs."
+;;   (let* ((function-name (or name (symbol-name command)))
+;;          (full-command (if args
+;;                            `(lambda ()
+;;                               (interactive)
+;;                               (apply ',command ',args))
+;;                          command)))  ; Use the original command directly
+;;     (map! :leader
+;;           :desc function-name
+;;           shortcut full-command)))
+
 (defun shortcut (shortcut command &optional name &rest args)
-  "Create a custom shortcut in Doom Emacs."
-  (let* ((function-name (or name (symbol-name command)))
-         (full-command (if args
-                           `(lambda ()
-                              (interactive)
-                              (apply ',command ',args))
-                         command)))  ; Use the original command directly
+  "Create a custom shortcut in Doom Emacs.
+SHORTCUT is a key sequence string.
+COMMAND is a symbol or function.
+NAME (optional) is the description.
+ARGS are fixed arguments passed to COMMAND."
+  (let* ((desc (or name (if (symbolp command) (symbol-name command) "anon-fn")))
+         (fn   (if args
+                   `(lambda ()
+                      (interactive)
+                      (apply #',command (list ,@args)))
+                 command)))
     (map! :leader
-          :desc function-name
-          shortcut full-command)))
+          :desc desc
+          shortcut fn)))
+
 
 ;;* indentation
 (add-hook 'yaml-mode-hook

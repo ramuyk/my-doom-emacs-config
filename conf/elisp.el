@@ -5,6 +5,7 @@
 (map! :leader "SPC" nil)
 (map! :leader ";" nil)
 (map! "<tab>" nil)
+(map! "S-<return>" nil)
 
 ;;* s config
 ;;(setq evil-snipe-auto-disable-substitute nil)
@@ -55,8 +56,6 @@
     (evil-define-key 'normal 'global (kbd "z e") 'a/org-next-src-block)
     (evil-define-key 'normal 'global (kbd "z f a") 'outline-hide-body)
     (evil-define-key 'normal 'global (kbd "z f u") 'outline-show-all)
-    (evil-define-key 'normal 'global (kbd "z f a") 'outline-hide-body)
-    (evil-define-key 'normal 'global (kbd "z f u") 'outline-show-all)
     (evil-define-key 'normal 'global (kbd "z n") 'a/narrow-to-outline)
     (evil-define-key 'normal 'global (kbd "z u") 'a/widen-and-collapse-if-narrowed)
     (evil-define-key 'normal 'global (kbd "z U") 'widen)
@@ -64,6 +63,11 @@
     (evil-define-key 'visual 'global (kbd "t t") 'a/create-temp-buffer-with-selection)
     (evil-define-key 'visual 'global (kbd "t p") 'speed-type-region)
     ))
+
+(after! evil-org
+  (evil-define-key 'normal evil-org-mode-map (kbd "S-<return>") 'gptel-send)
+  (evil-define-key 'insert evil-org-mode-map (kbd "S-<return>") 'a/gptel-send-normal)
+  )
 
 ;;* evil shortcuts (harpoon)
 (with-eval-after-load 'evil
@@ -163,6 +167,9 @@
   ;;** c
 (shortcut "c c" 'a/execute-code)
 
+  ;;** d
+;;(shortcut "d d" 'revert-buffer)
+
   ;;** e
 ;; (shortcut "e e" 'eshell)
 ;; (shortcut "e v" 'vterm)
@@ -239,12 +246,6 @@
 (shortcut "w v" 'split-window-vertically)
 (shortcut "w w" 'winner-undo)
 (shortcut "w f" 'winner-redo)
-
-
-  ;;** y
-(shortcut "y" 'z/vim-yank-y)
-(shortcut "Y" 'z/vim-yank-Y)
-(shortcut "d" 'z/vim-delete-d)
 
 
 ;;* functions
@@ -561,6 +562,11 @@ Prompts for a command that starts with 'z/' and the number of repetitions."
   (interactive)
   (when (eq major-mode 'harpoon-mode)
     (kill-buffer)))
+
+(defun a/gptel-send-normal ()
+  (interactive)
+  (gptel-send)
+  (evil-normal-state))
 
 ;;* consult
 (defun a/consult-ripgrep-here (&optional initial)
@@ -973,10 +979,6 @@ Preserves/restores this buffer's original dired-omit-files and dired-omit-mode."
 (fset 'z/window-down (kbd "L zt"))
 (fset 'z/window-up (kbd "H zb"))
 ;; (fset 'z/window-quit (kbd " bk wk"))
-
-;; (fset 'z/vim-yank-y (kbd "[[\"+y]]"))
-;; (fset 'z/vim-yank-Y (kbd "[[\"+Y]]"))
-;; (fset 'z/vim-delete-d (kbd "[[\"_d]]"))
 
 (defalias 'z/dired-magit-pull
    (kmacro "<return> SPC m m F u q h j"))
