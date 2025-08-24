@@ -8,6 +8,11 @@
 (a/defalias exec/display-exiftool a/exec-display-exiftool exec)
 (a/defalias exec/frequency-analysis a/exec-frequency-analysis exec)
 
+  ;;* git
+(a/defalias git/init magit-init magit)
+(a/defalias git/remote-add magit-remote-add magit)
+(a/defalias git/commit-amend magit-commit-amend magit)
+
 ;;* main
   ;;* avy
   ;;* company
@@ -24,6 +29,11 @@
 (a/defalias dired/do-kill-lines dired-do-kill-lines dired)
 (a/defalias dired/peep-kill-buffers-without-window peep-dired-kill-buffers-without-window dired)
 (a/defalias dired/toggle-marks dired-toggle-marks dired)
+
+  ;;* dirvish
+(a/defalias dirvish/narrow dirvish-narrow dired)
+(a/defalias dirvish/side dirvish-side dired)
+(a/defalias dirvish/total-file-size dirvish-total-file-size dired)
 
   ;;* gptel
 (a/defalias gptel/add gptel-add gptel)

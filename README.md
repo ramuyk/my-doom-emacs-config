@@ -39,3 +39,5 @@ if [ $? -ne 0 ]; then
 fi
 alias "emacs"='emacsclient -c -a ""'
 ```
+
+

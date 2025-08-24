@@ -84,12 +84,12 @@
 ;; (load-theme 'doom-ayu-dark t)
 ;; (load-theme 'doom-ayu-light t)
 ;; (load-theme 'doom-ayu-mirage t)
-;; (load-theme 'doom-challenger-deep t)
+;;; (load-theme 'doom-challenger-deep t)
 ;; (load-theme 'doom-city-lights t)
 ;; (load-theme 'doom-dark+ t)
 ;; (load-theme 'doom-dracula t)
 ;; (load-theme 'doom-ephemeral t)
-;; (load-theme 'doom-gruvbox t)
+;;;(load-theme 'doom-gruvbox t)
 ;; (load-theme 'doom-gruvbox-light t)
 ;; (load-theme 'doom-henna t)
 ;; (load-theme 'doom-homage-black t)
@@ -107,7 +107,7 @@
 ;; (load-theme 'doom-monokai-pro t)
 ;; (load-theme 'doom-monokai-ristretto t)
 ;; (load-theme 'doom-monokai-spectrum t)
-;; (load-theme 'doom-nord t)
+(load-theme 'doom-nord t)
 ;; (load-theme 'doom-nord-light t)
 ;; (load-theme 'doom-nova t)
 ;; (load-theme 'doom-oceanic-next t)
@@ -117,7 +117,7 @@
 ;; (load-theme 'doom-opera t)
 ;; (load-theme 'doom-opera-light t)
 ;; (load-theme 'doom-outrun-electric t)
-;; (load-theme 'doom-palenight t)
+;;;(load-theme 'doom-palenight t)
 ;; (load-theme 'doom-plain t)
 ;; (load-theme 'doom-plain-dark t)
 ;; (load-theme 'doom-rouge t)
@@ -129,7 +129,7 @@
 ;; (load-theme 'doom-sourcerer t)
 ;; (load-theme 'doom-spacegrey t)
 ;; (load-theme 'doom-tomorrow-day t)
-(load-theme 'doom-tomorrow-night t)
+;; (load-theme 'doom-tomorrow-night t)
 ;; (load-theme 'doom-vibrant t)
 ;; (load-theme 'doom-wilmersdorf t)
 ;; (load-theme 'doom-xcode t)
@@ -314,6 +314,15 @@
   +workspaces-main nil  ;; Disable workspaces entirely
   persp-mode nil)  ;; Ensure persp-mode is disabled
 
+(setq avy-all-windows t)
+
+;; dirvish preview in tramp connections
+(connection-local-set-profile-variables
+  'remote-direct-async-process
+  '((tramp-direct-async-process . t)))
+(connection-local-set-profiles
+  '(:application tramp :protocol "ssh")
+  'remote-direct-async-process)
 
 ;;* outline
 (defvar z/outline-regexp-alist
@@ -546,7 +555,5 @@ Also cache TARGET's 1st-line doc into `a/alias-docs` for display."
       (push (cons a doc1) a/alias-docs))))
 
 ;;* load elisp.el
-;;(load-file (expand-file-name "elisp.el" "~/.doom.d/"))
-
 (mapc #'load (file-expand-wildcards (expand-file-name "conf/*.el" doom-user-dir)))
 (load-file (expand-file-name "alias.el" "~/.doom.d/"))

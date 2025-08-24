@@ -6,6 +6,28 @@
 (map! :leader ";" nil)
 (map! "<tab>" nil)
 
+;;* s config
+;;(setq evil-snipe-auto-disable-substitute nil)
+;;(after! evil-snipe (evil-snipe-mode -1))
+(remove-hook 'doom-first-input-hook #'evil-snipe-mode)
+(remove-hook 'doom-first-input-hook #'evil-snipe-override-mode)
+(after! evil-snipe (global-evil-snipe-mode -1))
+
+(defvar my-s-prefix-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "s") #'a/vterm-here)
+    (define-key map (kbd "S") #'a/vterm-project-here)
+    (define-key map (kbd "e") #'a/eshell-here)
+    (define-key map (kbd "E") #'a/eshell-project-here)
+    (define-key map (kbd "v") #'a/vterm-here)
+    (define-key map (kbd "V") #'a/vterm-project-here)
+    (define-key map (kbd "b") #'projectile-ibuffer)
+    (define-key map (kbd "d") #'projectile-dired)
+    (define-key map (kbd "i") #'projectile-ielm)
+    map))
+
+(define-key evil-normal-state-map (kbd "s") my-s-prefix-map)
+
 ;;* evil shortcuts
 (with-eval-after-load 'helm-files
   (define-key helm-find-files-map (kbd "^") 'helm-find-files-up-one-level))
@@ -18,8 +40,9 @@
   (progn
     (evil-define-key 'insert 'global (kbd "<S-iso-lefttab>") 'q/go-to-column-50)
     (evil-define-key 'insert 'global (kbd "<S-<tab>") 'q/go-to-column-50)
-    ;;(evil-define-key 'normal 'global (kbd "<down>") 'z/window-down)
-    ;;(evil-define-key 'normal 'global (kbd "<up>") 'z/window-up)
+    (evil-define-key 'normal 'global (kbd "<down>") 'z/window-down)
+    (evil-define-key 'normal 'global (kbd "<up>") 'z/window-up)
+    (evil-define-key 'normal 'global (kbd "F") 'avy-goto-char-in-line)
     (evil-define-key 'normal 'global (kbd "<left>") 'centaur-tabs-backward)
     (evil-define-key 'normal 'global (kbd "<right>") 'centaur-tabs-forward)
     (evil-define-key 'normal 'global (kbd "C-<left>") 'previous-buffer)
@@ -30,6 +53,8 @@
     (evil-define-key 'normal 'global (kbd "m") 'a/evil-set-marker-and-bookmark)
     (evil-define-key 'normal 'global (kbd "z a") 'a/toggle-current-outline)
     (evil-define-key 'normal 'global (kbd "z e") 'a/org-next-src-block)
+    (evil-define-key 'normal 'global (kbd "z f a") 'outline-hide-body)
+    (evil-define-key 'normal 'global (kbd "z f u") 'outline-show-all)
     (evil-define-key 'normal 'global (kbd "z f a") 'outline-hide-body)
     (evil-define-key 'normal 'global (kbd "z f u") 'outline-show-all)
     (evil-define-key 'normal 'global (kbd "z n") 'a/narrow-to-outline)
@@ -79,6 +104,9 @@
 (map! :v "<" #'evil-shift-left
       :v ">" #'evil-shift-right)
 
+(global-set-key (kbd "C-c y") 'a/consult-copy-to-temp-buffer)
+(global-set-key (kbd "C-c h") 'a/consult-describe-command)
+
 ;; (evil-define-key 'insert 'global (kbd "C-c l") 'q/go-to-column-50)
 
 ;;* SPC (leader key)
@@ -107,12 +135,15 @@
   ;;** 0
 (shortcut "0 0" 'a/root-reopen-file)
 
-  ;;** 0
+  ;;** 9
 (shortcut "9 9" 'a/macro-repeat)
 
   ;;** a
 (shortcut "a" 'a/dired-root)
 (shortcut "SPC a" 'projectile-dired)
+
+(shortcut "A" 'dirvish)
+
 
   ;;** b
 (shortcut "b b" 'consult-buffer)
@@ -120,8 +151,6 @@
 (shortcut "b l" 'consult-locate)
 (shortcut "b L" 'a/consult-locate-dirs)
 (shortcut "b y" 'q/create-temporary-buffer)
-(global-set-key (kbd "C-c y") 'a/consult-copy-to-temp-buffer)
-(global-set-key (kbd "C-c h") 'a/consult-describe-command)
 (shortcut "b m" 'toggle-minibuffer)
 
 (shortcut "b k" 'q/kill-buffer-and-go-back)
@@ -150,6 +179,8 @@
 (shortcut "f e m" 'a/open-file "open-elisp-el" (concat (getenv "HOME") "/.doom.d/conf/elisp.el"))
 (shortcut "f e p" 'a/open-file "open-packages-el" (concat (getenv "HOME") "/.doom.d/packages.el"))
 (shortcut "f e r" 'a/open-file "open-packages-el" (concat (getenv "HOME") "/.doom.d/README.md"))
+(shortcut "f e a" 'a/open-file "open-packages-el" (concat (getenv "HOME") "/.doom.d/alias.el"))
+
 
 (shortcut "f n d" 'a/open-file "open-config-el" (concat (getenv "HOME") "/.config/nvim/init.lua"))
 (shortcut "f n m" 'a/open-file "open-elisp-el" (concat (getenv "HOME") "/.config/nvim/lua/myconfig.lua"))
@@ -639,6 +670,196 @@ Excludes macros and special forms. Focus the Help window if it opens."
       ;; Jump to help window if it exists
       (when-let ((help-win (get-buffer-window "*Help*" t)))
         (select-window help-win)))))   ; force focus to help split
+
+(defun a/consult-copy-to-temp-buffer (&optional exit)
+  "Snapshot current Consult/Vertico candidates into a buffer with the SAME columns.
+Opens an Embark Collect buffer and freezes it. With prefix EXIT, abort minibuffer."
+  (interactive "P")
+  (unless (minibufferp)
+    (user-error "Run this from an active Vertico/Consult minibuffer"))
+  (require 'embark)
+  (let ((embark-collect-live-update nil)               ; freeze (snapshot)
+        (embark-collect-initial-view-alist '((t . list)))) ; list view like your screenshot
+    (embark-collect)
+    (rename-buffer "*Completions Snapshot*" t)
+    (setq-local truncate-lines t)
+    (when exit (abort-recursive-edit))))
+
+(defun a/consult-describe-command (&optional exit)
+  "In a Consult/Vertico minibuffer (like `execute-extended-command`),
+open the documentation for the currently selected command.
+
+With prefix EXIT, also abort the minibuffer."
+  (interactive "P")
+  (unless (minibufferp)
+    (user-error "Run this from an active Vertico/Consult minibuffer"))
+  (let* ((cand (vertico--candidate))
+         (sym  (intern-soft cand)))
+    (unless (commandp sym)
+      (user-error "Not a command: %s" cand))
+    ;; Describe it
+    (describe-function sym)
+    ;; Optionally exit minibuffer
+    (when exit
+      (abort-recursive-edit))))
+
+;;* shell
+(defun a/eshell-here ()
+  "Open eshell in context of current buffer and make ibuffer group it by project/dir."
+  (interactive)
+  (require 'projectile)
+  (let* ((dir (cond
+               ((derived-mode-p 'dired-mode) (dired-current-directory))
+               ((buffer-file-name) (file-name-directory (buffer-file-name)))
+               (t default-directory)))
+         ;; If DIR is in a project, prefer the project root for grouping
+         (proj-root (ignore-errors (let ((default-directory dir))
+                                     (projectile-project-root))))
+         (target (file-name-as-directory (expand-file-name (or proj-root dir))))
+         (bufname (format "*eshell: %s*"
+                          (file-name-nondirectory (directory-file-name target)))))
+    (let ((default-directory target)
+          (eshell-buffer (eshell t)))
+      (with-current-buffer eshell-buffer
+        (rename-buffer bufname t)
+        ;; Ensure ibuffer groups this buffer correctly
+        (setq-local default-directory target)
+        (setq-local list-buffers-directory target)
+        (when proj-root
+          (setq-local projectile-project-root (file-name-as-directory
+                                               (expand-file-name proj-root)))))
+      (pop-to-buffer eshell-buffer))))
+
+(defun a/eshell-project-here ()
+  "Open eshell in the Projectile project root (fallback to current dir) and make ibuffer group it correctly."
+  (interactive)
+  (require 'projectile)
+  (let* ((project-root (ignore-errors (projectile-project-root)))
+         (fallback-dir (cond
+                        ((derived-mode-p 'dired-mode) (dired-current-directory))
+                        ((buffer-file-name) (file-name-directory (buffer-file-name)))
+                        (t default-directory)))
+         (target (file-name-as-directory (expand-file-name (or project-root fallback-dir))))
+         (bufname (format "*eshell: %s*"
+                          (file-name-nondirectory (directory-file-name
+                                                   (or project-root target))))))
+    ;; Create eshell already at TARGET (no post-open `cd`)
+    (let ((default-directory target)
+          (eshell-buffer (eshell t)))
+      (with-current-buffer eshell-buffer
+        (rename-buffer bufname t)
+        ;; Ensure ibuffer (ibuffer-projectile) groups this under the project
+        (setq-local default-directory target)
+        (setq-local list-buffers-directory target)
+        (when project-root
+          (setq-local projectile-project-root
+                      (file-name-as-directory (expand-file-name project-root)))))
+      (pop-to-buffer eshell-buffer))))
+
+(defun a/vterm-here (&optional new)
+  "Open vterm in the current buffer's directory (NOT the project root).
+Reuses *vterm: <dir>* unless NEW (C-u) is given. Opens full-window."
+  (interactive "P")
+  (require 'vterm)
+  (require 'projectile)
+  (let* ((bufdir (or (and (derived-mode-p 'dired-mode) (dired-current-directory))
+                     (and (buffer-file-name) (file-name-directory (buffer-file-name)))
+                     default-directory))
+         (dir     (file-name-as-directory (expand-file-name bufdir)))
+         (name    (file-name-nondirectory (directory-file-name dir)))
+         (bufname (format "*vterm: %s*" name))
+         (existing (get-buffer bufname)))
+    (if (and existing (not new))
+        (progn
+          (switch-to-buffer existing)
+          (delete-other-windows))
+      (let* ((default-directory dir)
+             (buf (save-window-excursion (vterm) (current-buffer))))
+        (with-current-buffer buf
+          (rename-buffer bufname t)
+          ;; Keep metadata consistent for ibuffer/project views
+          (setq-local default-directory dir
+                      list-buffers-directory dir)
+          (let ((root (ignore-errors (projectile-project-root))))
+            (when root
+              (setq-local projectile-project-root
+                          (file-name-as-directory (expand-file-name root))))))
+        (switch-to-buffer buf)
+        (delete-other-windows)))))
+
+
+(defun a/vterm-project-here (&optional new)
+  "Open vterm at the Projectile project root (or current dir) in THIS window, full-window.
+Reuses *vterm: <name>* unless NEW (C-u) is provided. Groups correctly in ibuffer."
+  (interactive "P")
+  (require 'vterm)
+  (require 'projectile)
+  (let* ((project-root (ignore-errors (projectile-project-root)))
+         (dir (or project-root
+                  (and (derived-mode-p 'dired-mode) (dired-current-directory))
+                  (and (buffer-file-name) (file-name-directory (buffer-file-name)))
+                  default-directory))
+         (dir (file-name-as-directory (expand-file-name dir)))
+         (name (file-name-nondirectory (directory-file-name dir)))
+         (bufname (format "*vterm: %s*" name))
+         (existing (get-buffer bufname)))
+    (cond
+     ;; Reuse existing project vterm
+     ((and existing (not new))
+      (switch-to-buffer existing)
+      (delete-other-windows))
+     (t
+      ;; Create vterm already in DIR (no post-open `cd`)
+      (let* ((default-directory dir)
+             (buf (save-window-excursion (vterm) (current-buffer))))
+        (with-current-buffer buf
+          (rename-buffer bufname t)
+          ;; Ensure Emacs-side metadata stays tied to the project/dir for ibuffer
+          (setq-local default-directory dir)
+          (setq-local list-buffers-directory dir)
+          (when project-root
+            (setq-local projectile-project-root
+                        (file-name-as-directory (expand-file-name project-root)))))
+        (switch-to-buffer buf)
+        (delete-other-windows))))))
+
+;;* dired
+(defun a/dired-toggle-dotfiles ()
+  "Toggle hiding of dotfiles in the current Dired buffer using dired-omit.
+Preserves/restores this buffer's original dired-omit-files and dired-omit-mode."
+  (interactive)
+  (unless (derived-mode-p 'dired-mode)
+    (user-error "Not in a Dired buffer"))
+  (require 'dired-x)
+  (let ((dot-rx "\\`\\.[^.].*")        ; dotfiles (not . or ..)
+        (hidden (and (local-variable-p 'my/dired--dotfiles-hidden)
+                     my/dired--dotfiles-hidden)))
+    (if hidden
+        ;; Unhide: restore previous omit config.
+        (progn
+          (when (local-variable-p 'my/dired--saved-omit-files)
+            (setq-local dired-omit-files my/dired--saved-omit-files))
+          (unless (and (local-variable-p 'my/dired--saved-omit-mode)
+                       my/dired--saved-omit-mode)
+            (dired-omit-mode 0))
+          (kill-local-variable 'my/dired--dotfiles-hidden)
+          (kill-local-variable 'my/dired--saved-omit-files)
+          (kill-local-variable 'my/dired--saved-omit-mode)
+          (revert-buffer)
+          (message "Dotfiles visible"))
+      ;; Hide: save current omit config and extend it with dotfiles.
+      (setq-local my/dired--dotfiles-hidden t)
+      (setq-local my/dired--saved-omit-files dired-omit-files)
+      (setq-local my/dired--saved-omit-mode (bound-and-true-p dired-omit-mode))
+      (setq-local dired-omit-files
+                  (if (and (stringp dired-omit-files)
+                           (> (length dired-omit-files) 0))
+                      (concat dired-omit-files "\\|" dot-rx)
+                    dot-rx))
+      (dired-omit-mode 1)
+      (revert-buffer)
+      (message "Dotfiles hidden"))))
+
 ;;* exec functions
 
 (defun a/execute-code ()
@@ -753,9 +974,9 @@ Excludes macros and special forms. Focus the Help window if it opens."
 (fset 'z/window-up (kbd "H zb"))
 ;; (fset 'z/window-quit (kbd " bk wk"))
 
-(fset 'z/vim-yank-y (kbd "[[\"+y]]"))
-(fset 'z/vim-yank-Y (kbd "[[\"+Y]]"))
-(fset 'z/vim-delete-d (kbd "[[\"_d]]"))
+;; (fset 'z/vim-yank-y (kbd "[[\"+y]]"))
+;; (fset 'z/vim-yank-Y (kbd "[[\"+Y]]"))
+;; (fset 'z/vim-delete-d (kbd "[[\"_d]]"))
 
 (defalias 'z/dired-magit-pull
    (kmacro "<return> SPC m m F u q h j"))

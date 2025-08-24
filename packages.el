@@ -37,7 +37,7 @@
 (package! copilot)
 (package! copilot-chat)
 (package! flycheck)
-;;(package! gptel)
+(package! gptel)
 (package! harpoon)
 (package! imenu-list)
 (package! openwith)
