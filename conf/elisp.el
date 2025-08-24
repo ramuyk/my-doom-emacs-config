@@ -3,11 +3,12 @@
 ;;* unbind keys
 (map! :leader "f e" nil)
 (map! :leader "SPC" nil)
+(map! :leader ";" nil)
+(map! "<tab>" nil)
 
 ;;* evil shortcuts
 (with-eval-after-load 'helm-files
   (define-key helm-find-files-map (kbd "^") 'helm-find-files-up-one-level))
-
 
 ;; Unbind Shift+Tab in org-mode to prevent conflicts
 (with-eval-after-load 'org
@@ -17,8 +18,8 @@
   (progn
     (evil-define-key 'insert 'global (kbd "<S-iso-lefttab>") 'q/go-to-column-50)
     (evil-define-key 'insert 'global (kbd "<S-<tab>") 'q/go-to-column-50)
-    (evil-define-key 'normal 'global (kbd "<down>") 'z/window-down)
-    (evil-define-key 'normal 'global (kbd "<up>") 'z/window-up)
+    ;;(evil-define-key 'normal 'global (kbd "<down>") 'z/window-down)
+    ;;(evil-define-key 'normal 'global (kbd "<up>") 'z/window-up)
     (evil-define-key 'normal 'global (kbd "<left>") 'centaur-tabs-backward)
     (evil-define-key 'normal 'global (kbd "<right>") 'centaur-tabs-forward)
     (evil-define-key 'normal 'global (kbd "C-<left>") 'previous-buffer)
@@ -33,19 +34,20 @@
     (evil-define-key 'normal 'global (kbd "z f u") 'outline-show-all)
     (evil-define-key 'normal 'global (kbd "z n") 'a/narrow-to-outline)
     (evil-define-key 'normal 'global (kbd "z u") 'a/widen-and-collapse-if-narrowed)
+    (evil-define-key 'normal 'global (kbd "z U") 'widen)
     (evil-define-key 'visual 'global (kbd "t s") 'sort-lines)
     (evil-define-key 'visual 'global (kbd "t t") 'a/create-temp-buffer-with-selection)
     (evil-define-key 'visual 'global (kbd "t p") 'speed-type-region)
     ))
 
-
 ;;* evil shortcuts (harpoon)
 (with-eval-after-load 'evil
   (progn
+    (evil-define-key 'normal 'global (kbd "`") 'evil-jump-item)
     (evil-define-key 'normal harpoon-mode-map (kbd "q") 'q/harpoon-close-buffer)
     (evil-define-key 'normal harpoon-mode-map (kbd "RET") 'harpoon-find-file)
-    (evil-define-key 'normal 'global (kbd ", ,") 'harpoon-toggle-file)
-    (evil-define-key 'normal 'global (kbd ", .") 'harpoon-toggle-quick-menu)
+    (evil-define-key 'normal 'global (kbd ", .") 'harpoon-toggle-file)
+    (evil-define-key 'normal 'global (kbd ", ,") 'harpoon-toggle-quick-menu)
     (evil-define-key 'normal 'global (kbd ", a") 'harpoon-add-file)
     (evil-define-key 'normal 'global (kbd ", c") 'harpoon-clear)
 
@@ -61,12 +63,9 @@
 
 
     (evil-define-key 'normal 'global (kbd ", i") 'imenu-list)
-    ;; (evil-define-key 'normal 'global (kbd ", ,") 'a/helm-find-gt-directories)
     (evil-define-key 'normal 'global (kbd "SPC 1 1") 'a/helm-find-github-directories)
     (evil-define-key 'normal 'global (kbd "SPC 1 2") 'a/helm-find-gt-directories)
     (evil-define-key 'normal 'global (kbd "SPC 1 3") 'a/helm-find-all-gt-directories)
-    ;; (evil-define-key 'normal 'global (kbd ", SPC") 'a/helm-find-all-gt-directories)
-    (evil-define-key 'normal 'global (kbd "SPC SPC .") 'Helper-describe-bindings)
     (evil-define-key 'normal 'global (kbd ", r") 'helm-register)
     (evil-define-key 'normal 'global (kbd ", b") 'helm-bookmarks)
     ))
@@ -85,14 +84,17 @@
 ;;* SPC (leader key)
 
   ;;** special characters
-(shortcut "," 'a/helm-fuzzy-folder-find-files)
-(shortcut "SPC ," 'helm-projectile)
-(shortcut "SPC SPC ," 'helm-find)
+(shortcut "." 'execute-extended-command)
+(shortcut "SPC ." 'a/consult-apropos)
+(shortcut "SPC SPC ." 'a/consult-functions)
 (shortcut "SPC SPC SPC ." 'helpful-variable)
-(shortcut "." 'helm-M-x)
+
+(shortcut "," 'find-file)
+(shortcut "SPC ," 'consult-find)
+(shortcut "SPC SPC ," 'helm-find-files-1 "helm-open-home-dir" "/home/rafael/")
+
 (shortcut "SPC 1" 'delete-other-windows)
 (shortcut "SPC 0" 'delete-window)
-(shortcut "SPC SPC ." 'helm-apropos)
 (shortcut "<" 'a/goto-previous-outline)
 (shortcut ">" 'a/goto-next-outline)
 (shortcut "<left>" 'a/goto-previous-outline)
@@ -100,6 +102,8 @@
 (shortcut "/" 'swiper-isearch)
 (shortcut "SPC /" 'swiper-all)
 
+(shortcut ";" 'a/alias-M-x)
+(shortcut "SPC ;" 'a/alias-set-tag)
   ;;** 0
 (shortcut "0 0" 'a/root-reopen-file)
 
@@ -111,18 +115,22 @@
 (shortcut "SPC a" 'projectile-dired)
 
   ;;** b
-(shortcut "b b" 'a/helm-fuzzy-open-buffers)
-(shortcut "b t" 'a/helm-fuzzy-file-history)
-(shortcut "b l" 'a/helm-fuzzy-file-locate)
-(global-set-key (kbd "C-c y") 'q/helm-copy-to-temp-buffer)
+(shortcut "b b" 'consult-buffer)
+(shortcut "b t" 'consult-recent-file)
+(shortcut "b l" 'consult-locate)
+(shortcut "b L" 'a/consult-locate-dirs)
+(shortcut "b y" 'q/create-temporary-buffer)
+(global-set-key (kbd "C-c y") 'a/consult-copy-to-temp-buffer)
+(global-set-key (kbd "C-c h") 'a/consult-describe-command)
 (shortcut "b m" 'toggle-minibuffer)
+
 (shortcut "b k" 'q/kill-buffer-and-go-back)
-;;(shortcut "b s" 'swiper-helm)
+(shortcut "b K" 'a/kill-buffer-and-window-force)
+(shortcut "b +" 'q/make-current-file-executable)
+(shortcut "b w" 'q/kill-buffer-and-window)
+
 (shortcut "b s" 'swiper-isearch)
 (shortcut "b a" 'swiper-all)
-(shortcut "b +" 'q/make-current-file-executable)
-(shortcut "b p" '+helm/projectile-find-file)
-
   ;;** c
 (shortcut "c c" 'a/execute-code)
 
@@ -139,7 +147,7 @@
   ;;** f
 (shortcut "f e d" 'a/open-file "open-config-el" (concat (getenv "HOME") "/.doom.d/config.el"))
 (shortcut "f e i" 'a/open-file "open-init-el" (concat (getenv "HOME") "/.doom.d/init.el"))
-(shortcut "f e m" 'a/open-file "open-elisp-el" (concat (getenv "HOME") "/.doom.d/elisp.el"))
+(shortcut "f e m" 'a/open-file "open-elisp-el" (concat (getenv "HOME") "/.doom.d/conf/elisp.el"))
 (shortcut "f e p" 'a/open-file "open-packages-el" (concat (getenv "HOME") "/.doom.d/packages.el"))
 (shortcut "f e r" 'a/open-file "open-packages-el" (concat (getenv "HOME") "/.doom.d/README.md"))
 
@@ -165,21 +173,28 @@
 (shortcut "k e" 'edit-named-kbd-macro)
 
   ;;** p
-(shortcut "p f" '+helm/projectile-find-file)
-(shortcut "p d" 'projectile-find-dir)
-(shortcut "p i" 'a/helm-fuzzy-project-content-rg)
+(shortcut "p 1" 'a/consult-ripgrep-here)
+(shortcut "p 2" 'a/consult-find-here)
+(shortcut "p 3" 'a/consult-files-with-content)
+
+(shortcut "p p" 'consult-dir)
+(shortcut "p P" 'projectile-switch-project)
+(shortcut "p f" 'projectile-find-file)
+(shortcut "p i" 'consult-git-grep)
 (shortcut "p k" 'a/projectile-kill-other-buffers)
-(shortcut "p p" 'a/helm-fuzzy-project-switch)
-(shortcut "p 1" 'a/helm-fuzzy-folder-content-1)
-(shortcut "p 2" 'a/helm-fuzzy-folder-content-2)
+(map! :map dired-mode-map "SPC p k" 'centaur-tabs-kill-other-buffers-in-current-group)
+(shortcut "p j" 'a/consult-find-proj-gt-directories-from-file)
+(shortcut "p d" 'projectile-find-dir)
 
   ;;** m
-(shortcut "m 1" 'magit-status)
 (shortcut "m m" 'magit-log-current)
 (shortcut "m f" 'magit-log-buffer-file)
 (shortcut "m r" 'magit-refresh)
-;;(shortcut "m l" 'magit-pull)
 (shortcut "m c" 'magit-checkout)
+(shortcut "m l 1" 'magit-gptcommit-generate)
+(shortcut "m l 2" 'magit-gptcommit-commit-create)
+(shortcut "m l q" 'magit-gptcommit-commit-quick)
+(shortcut "m l l" 'copilot-chat-insert-commit-message)
 
   ;;** h
 (shortcut "h l" 'clm/open-command-log-buffer)
@@ -311,6 +326,20 @@
   (let ((previous-buf (other-buffer (current-buffer) t)))
     (kill-this-buffer)
     (switch-to-buffer previous-buf)))
+
+(defun a/kill-buffer-and-window-force ()
+  "Force quit current frame and kill its buffer."
+  (interactive)
+  (let ((buffer (current-buffer)))
+    (set-buffer-modified-p nil)
+    (delete-frame)
+    (kill-buffer buffer)))
+
+(defun q/kill-buffer-and-window ()
+  "Kill the current buffer and delete the window it's displayed in."
+  (interactive)
+  (kill-this-buffer)
+  (delete-window))
 
 (defun q/make-current-file-executable ()
   "Make the current file executable."
@@ -502,6 +531,114 @@ Prompts for a command that starts with 'z/' and the number of repetitions."
   (when (eq major-mode 'harpoon-mode)
     (kill-buffer)))
 
+;;* consult
+(defun a/consult-ripgrep-here (&optional initial)
+  "Run `consult-ripgrep` in the current directory instead of project root."
+  (interactive)
+  (consult-ripgrep default-directory initial))
+
+(defun a/consult-find-here ()
+  "Run `consult-find` in the current directory instead of project root."
+  (interactive)
+  (consult-find default-directory))
+
+(defun a/consult-files-with-content (pattern)
+  "Search for PATTERN in project and show only files that match."
+  (interactive "sSearch pattern: ")
+  (let* ((default-directory (project-root (project-current t)))
+         (files (split-string
+                 (shell-command-to-string
+                  (format "rg --files-with-matches -g '!*node_modules*' -i -n %s"
+                          (shell-quote-argument pattern)))
+                 "\n" t)))
+    (find-file (completing-read "File: " files))))
+
+(defun a/consult-find-proj-gt-directories-from-file ()
+  "Select a repo dir from ~/.list-of-git-projects and open it in Dired."
+  (interactive)
+  (require 'consult)
+  (let* ((dirs (q/find-proj-gt-directories-from-file))
+         (choice (consult--read dirs
+                                :prompt "Git repo (from file): "
+                                :require-match t
+                                :sort nil
+                                :category 'file
+                                :history 'a/consult-find-proj-gt-directories-from-file-history)))
+    (when (and choice (file-directory-p choice))
+      (dired choice))))
+
+(defun a/consult-apropos ()
+  "Consult UI to pick any defined symbol, then show its help.
+Requires Consult for the minibuffer UI."
+  (interactive)
+  (unless (require 'consult nil t)
+    (user-error "Consult not loaded (enable :completion vertico or install consult)"))
+  ;; Collect only *defined* things to keep the list relevant & smaller.
+  (let* ((names
+          (let (acc)
+            (mapatoms
+             (lambda (s)
+               (when (or (fboundp s) (boundp s) (facep s))
+                 (push (symbol-name s) acc))))
+            acc))
+         (choice (consult--read
+                  names
+                  :prompt "Describe symbol: "
+                  :category 'symbol         ; lets Marginalia annotate nicely
+                  :require-match t
+                  :sort t))
+         (sym (intern-soft choice)))
+    (unless sym (user-error "No symbol interned for %S" choice))
+    ;; Prefer the generic help that shows all roles for the symbol.
+    (cond
+     ((fboundp 'describe-symbol) (describe-symbol sym)) ; C-h o in Emacs
+     ((and (fboundp sym))        (describe-function sym))
+     ((boundp sym)               (describe-variable sym))
+     ((facep sym)                (describe-face sym))
+     (t                          (user-error "Don’t know how to describe %S" sym)))
+
+      ;; Jump to help window if it exists
+      (when-let ((help-win (get-buffer-window "*Help*" t)))
+        (select-window help-win))
+    ))
+
+(defun a/consult-functions ()
+  "Consult list of ALL functions (interactive or not) with a [cmd]/[fn] flag.
+Excludes macros and special forms. Focus the Help window if it opens."
+  (interactive)
+  (unless (require 'consult nil t)
+    (user-error "Consult not loaded"))
+  (let* ((tbl (make-hash-table :test 'equal))  ; name -> (SYMBOL . IS-COMMAND)
+         (names
+          (let (acc)
+            (mapatoms
+             (lambda (s)
+               (when (and (fboundp s)
+                          (not (macrop s))
+                          (not (special-form-p s)))
+                 (let ((name (symbol-name s)))
+                   (puthash name (cons s (commandp s)) tbl)
+                   (push name acc)))))
+            (nreverse acc))))
+    (let* ((aff (lambda (cands)
+                  (mapcar (lambda (name)
+                            (pcase-let ((`(,_sym . ,is-cmd) (gethash name tbl)))
+                              (list "" name (if is-cmd "  [cmd]" "  [fn]"))))
+                          cands)))
+           (completion-extra-properties `(:affixation-function ,aff))
+           (choice (consult--read names
+                                  :prompt "Function (any): "
+                                  :require-match t
+                                  :category 'function
+                                  :sort t))
+           (sym (car (gethash choice tbl))))
+      (unless (symbolp sym)
+        (user-error "No symbol for %S" choice))
+      ;; Show doc
+      (describe-function sym)
+      ;; Jump to help window if it exists
+      (when-let ((help-win (get-buffer-window "*Help*" t)))
+        (select-window help-win)))))   ; force focus to help split
 ;;* exec functions
 
 (defun a/execute-code ()
@@ -622,10 +759,6 @@ Prompts for a command that starts with 'z/' and the number of repetitions."
 
 (defalias 'z/dired-magit-pull
    (kmacro "<return> SPC m m F u q h j"))
-
-;;* kmacros
-
-
 
 ;;* aliases
 (defalias 'a/helm-fuzzy-file-history '+helm/workspace-mini)

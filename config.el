@@ -186,6 +186,21 @@
         (treemacs-follow-mode 1)
   )
 
+;;(use-package! gptel
+;;  :config
+;;  (setq! gptel-backend (gptel-make-gh-copilot "Copilot")))
+  ;;(setq! gptel-api-key (getenv "GPT_API")))
+
+;;(gptel-make-gh-copilot "Copilot")
+
+(use-package! copilot
+ :hook (prog-mode . copilot-mode)
+ :bind (:map copilot-completion-map
+         ("<tab>" . 'copilot-accept-completion)
+         ("TAB" . 'copilot-accept-completion)
+         ("C-TAB" . 'copilot-accept-completion-by-word)
+         ("C-<tab>" . 'copilot-accept-completion-by-word)))
+
 ;;* shortcut function
 (defun shortcut (shortcut command &optional name &rest args)
   "Create a custom shortcut in Doom Emacs."
@@ -286,32 +301,51 @@
 
 ;;(use-package! xclip :config (xclip-mode 1))
 
+(desktop-save-mode -1)
+(setq desktop-save nil
+  desktop-files-not-to-save "^.*$"  ;; Save nothing
+  desktop-load-locked-desktop nil
+  desktop-auto-save-timeout nil
+  desktop-restore-eager 0
+  desktop-restore-frames nil)
+
+(remove-hook 'doom-init-ui-hook #'doom/restore-session)
+(setq +workspaces-on-switch-project-behavior nil
+  +workspaces-main nil  ;; Disable workspaces entirely
+  persp-mode nil)  ;; Ensure persp-mode is disabled
+
+
 ;;* outline
 (defvar z/outline-regexp-alist
   '(
-    (c-mode          . "\\s-*//\\*+")
-    (latex-mode      . "\\s-*\\%\\*+")
-    (dockerfile-mode . "\\s-*#\\*+")
-    (emacs-lisp-mode . "\\s-*;;\\*+")
-    (html-mode       . "\\s-*<!--\\*+")
-    (java-mode       . "\\s-*//\\*+")
-    (js-mode         . "\\s-*//\\*+")
-    (js2-mode        . "\\s-*//\\*+")
-    (rjsx-mode       . "\\s-*//\\*+")
-    (go-mode         . "\\s-*//\\*+")
-    (typescript-mode . "\\s-*//\\*+")
-    (python-mode     . "\\s-*#\\*+")
-    (sql-mode        . "\\s-*\\-\\-\\s\\*+")
-    (lua-mode        . "\\s-*\\-\\-\\*+")
-    (sh-mode         . "\\s-*#\\*+")
-    (ruby-mode       . "\\s-*\\(#\\*+\\|\\(class\\|module\\)\\s-+\\)")
-    (awk-mode        . "\\s-*#\\*+")
-    (conf-mode       . "\\s-*#\\*+")
-    (vimrc-mode      . "\\s-*\"\\*+")
-    (web-mode        . "\\(\\s-*//\\*+\\)\\|\\(\\s-*<!--\\*+\\)")
-    (yaml-mode       . "\\s-*#\\*+")
-    (terraform-mode  . "\\s-*#\\*+")
-  ))
+     (awk-mode        . "\\s-*#\\*+")
+     (c-mode          . "\\s-*//\\*+")
+     (conf-mode       . "\\s-*#\\*+")
+     (dockerfile-mode . "\\s-*#\\*+")
+     (elixir-mode     . "\\s-*#\\*+")
+     (emacs-lisp-mode . "\\s-*;;\\*+\\|^;;;;.*")
+     (go-mode         . "\\s-*//\\*+")
+     (java-mode       . "\\s-*//\\*+")
+     (js-mode         . "\\s-*//\\*+")
+     (js2-mode        . "\\s-*//\\*+")
+     (latex-mode      . "\\s-*\\%\\*+")
+     (lua-mode        . "\\s-*\\-\\-\\*+")
+     (python-mode     . "\\s-*#\\*+")
+     (restclient-mode     . "\\s-*#\\*+")
+     (graphql-mode     . "\\s-*#\\*+")
+     (rjsx-mode       . "\\s-*//\\*+\\|\\s-*{/\\*\\*+")
+     (typescript-tsx-mode . "\\s-*//\\*+\\|\\s-*{/\\*\\*+")
+     (tsx-ts-mode . "\\s-*//\\*+\\|\\s-*{/\\*\\*+")
+     (ruby-mode       . "\\s-*\\(#\\*+\\|\\(class\\|module\\)\\s-+\\)")
+     (sh-mode         . "\\s-*#\\*+")
+     (sql-mode        . "\\s-*\\-\\-\\*+")
+     (terraform-mode  . "\\s-*#\\*+")
+     (typescript-mode . "\\s-*//\\*+")
+     (typescript-ts-mode . "\\s-*//\\*+")
+     (vimrc-mode      . "\\s-*\"\\*+")
+     (web-mode        . "\\(\\s-*//\\*+\\)\\|\\(\\s-*<!--\\*+\\)")
+     (yaml-mode       . "\\s-*#\\*+")
+     ))
 
 (defun z/emacs-lisp-outline-level ()
   "Return the outline level based on the number of asterisks for Emacs Lisp."
@@ -323,27 +357,34 @@
   (let ((str (match-string 0)))
     (cl-count ?* str)))
 
-(defun q/debug-ruby-outline ()
+(defun j/debug-ruby-outline ()
   "Debug function to manually set outline-regexp for Ruby mode."
   (interactive)
   (setq-local outline-regexp "\\s-*\\(#\\*+\\|\\(class\\|module\\)\\s-+\\)")
   (outline-minor-mode 1)
   (message "Manually set outline-regexp for Ruby: %s" outline-regexp))
 
+(defun z/elixir-outline-level ()
+  "Return the outline level based on the number of asterisks for Elixir."
+  (let ((str (match-string 0)))
+    (cl-count ?* str)))
+
 (dolist (pair z/outline-regexp-alist)
   (let ((mode (car pair))
-        (regexp (cdr pair)))
+         (regexp (cdr pair)))
     (add-hook (intern (concat (symbol-name mode) "-hook"))
-              (lambda ()
-                (setq-local outline-regexp regexp)
-                (outline-minor-mode 1)
-                (when (eq mode 'emacs-lisp-mode)
-                  (setq-local outline-level 'z/emacs-lisp-outline-level))
-                (when (eq mode 'ruby-mode)
-                  (setq-local outline-level 'z/ruby-outline-level))
-                (message "Outline mode set for %s with regexp: %s" mode regexp)
-                ;; Add similar conditions for other modes if needed
-                ))))
+      (lambda ()
+        (setq-local outline-regexp regexp)
+        (outline-minor-mode 1)
+        (when (eq mode 'emacs-lisp-mode)
+          (setq-local outline-level 'z/emacs-lisp-outline-level))
+        (when (eq mode 'ruby-mode)
+          (setq-local outline-level 'z/ruby-outline-level))
+        (message "Outline mode set for %s with regexp: %s" mode regexp)
+        ;; Add similar conditions for other modes if needed
+        ))))
+
+(add-hook 'elixir-mode-hook (lambda () (z/elixir-outline-level)))
 
 (defun q/toggle-outline ()
   "Toggle outline visibility using `outline-hide-subtree` and `outline-show-subtree`.
@@ -353,43 +394,159 @@ If not on a heading line, move to the previous visible heading and toggle its vi
     (unless (outline-on-heading-p t)
       (outline-previous-visible-heading 1))
     (if (outline-invisible-p (line-end-position))
-        (outline-show-subtree)
+      (outline-show-subtree)
       (outline-hide-subtree))))
 
 (defun a/context-aware-tab ()
   "A context-aware tab function."
   (interactive)
   (if (outline-on-heading-p t)
-      (q/toggle-outline)
+    (q/toggle-outline)
     (if (save-excursion (outline-back-to-heading t) (outline-on-heading-p t))
-        (save-excursion
-          (outline-back-to-heading t)
-          (q/toggle-outline))
+      (save-excursion
+        (outline-back-to-heading t)
+        (q/toggle-outline))
       (indent-for-tab-command))))
+
 
 (defun a/setup-outline-mode ()
   "Setup outline minor mode based on `z/outline-regexp-alist`."
-  (message "setup-outline-mode")
   (let ((regexp (cdr (assoc major-mode z/outline-regexp-alist))))
     (when regexp
       (setq-local outline-regexp regexp)
       (outline-minor-mode 1)
-      (evil-define-key 'normal outline-minor-mode-map (kbd "TAB") 'a/context-aware-tab)
-      (evil-define-key 'visual 'global (kbd "TAB") 'a/toggle-comments)
+      (evil-define-key 'normal outline-minor-mode-map (kbd "<tab>") 'a/context-aware-tab)
+      (evil-define-key 'visual 'global (kbd "<tab>") 'a/toggle-comments)
       (cond
-       ((eq major-mode 'python-mode)
-        (setq-local outline-heading-end-regexp "\n"))
-       ;; Add more major modes if specific configurations are needed
-       ))
+        ((eq major-mode 'python-mode)
+          (setq-local outline-heading-end-regexp "\n"))
+        ;; Add more major modes if specific configurations are needed
+        ))
     (message "Outline mode configured for %s with regexp: %s" major-mode regexp)))
 
 (add-hook 'prog-mode-hook 'a/setup-outline-mode)
-
 
 (defun a/toggle-comments (beg end)
   "Toggle comment on selected code."
   (interactive "r")
   (comment-or-uncomment-region beg end))
 
+
+;;* a/m-x
+;; --- Registries --------------------------------------------------------------
+
+(defvar a/aliases nil
+  "Symbols of personal commands defined via `a/defalias`.")
+
+(defvar a/alias-tags nil
+  "Alist of (ALIAS . TAG). Untagged aliases don't appear here.")
+
+(defvar a/alias-targets nil
+  "Alist of (ALIAS . TARGET) recorded by `a/defalias`.")
+
+(defvar a/alias-active-tag 'all
+  "Currently active tag filter. `all` means no filtering.")
+
+(defvar a/alias-docs nil
+  "Alist of (ALIAS . DOCSTRING) cached at definition time for UI annotations.")
+
+
+;; --- API ---------------------------------------------------------------------
+
+(defmacro a/defalias (alias target &optional tag)
+  "Register ALIAS for TARGET without defining an interactive command.
+If TAG is given, categorize this alias under TAG.
+Also cache TARGET's 1st-line doc into `a/alias-docs` for display."
+  `(progn
+     ;; Register alias and mapping (no defun)
+     (add-to-list 'a/aliases ',alias)
+     (setq a/alias-targets (assq-delete-all ',alias a/alias-targets))
+     (push (cons ',alias ',target) a/alias-targets)
+     ,@(when tag
+         `((setq a/alias-tags (assq-delete-all ',alias a/alias-tags))
+           (push (cons ',alias ',tag) a/alias-tags)))
+     ;; Cache first line of doc (if target loaded)
+     (let* ((tgt ',target)
+            (raw (and (fboundp tgt) (documentation tgt t)))
+            (doc1 (and (stringp raw) (car (split-string raw "\n")))))
+       (setq a/alias-docs (assq-delete-all ',alias a/alias-docs))
+       (push (cons ',alias doc1) a/alias-docs))
+     ',alias))
+
+
+(defun a/alias-set-tag ()
+  "Pick active tag filter from distinct tags (plus `all`)."
+  (interactive)
+  (let* ((tags (delete-dups (delq nil (mapcar #'cdr a/alias-tags))))
+         (choices (cons "all" (mapcar #'symbol-name tags)))
+         (sel (completing-read "Choose alias tag filter: " choices nil t nil nil "all")))
+    (setq a/alias-active-tag (if (string= sel "all") 'all (intern sel)))))
+
+(defun a/alias-M-x ()
+  "Run one of my aliases, filtered by `a/alias-active-tag` (Consult UI with tabular docs)."
+  (interactive)
+  (unless a/aliases
+    (user-error "No aliases defined with `a/defalias`"))
+  (unless (require 'consult nil t)
+    (user-error "Consult not loaded; install/enable it"))
+
+  ;; Filter alias list
+  (let* ((alist (if (eq a/alias-active-tag 'all)
+                    a/aliases
+                  (let (filtered)
+                    (dolist (a a/aliases)
+                      (when (eq (cdr (assq a a/alias-tags)) a/alias-active-tag)
+                        (push a filtered)))
+                    (nreverse filtered)))))
+    (when (null alist)
+      (user-error "No aliases with tag %s" (symbol-name a/alias-active-tag)))
+
+    (let* ((names (mapcar #'symbol-name alist))
+           ;; compute the doc-column once so we can align reliably
+           (maxw 0))
+      (dolist (n names) (setq maxw (max maxw (string-width n))))
+      (let* ((doc-col (+ 2 maxw))  ;; 2 spaces after the longest alias
+             (annotate
+              (lambda (cn)
+                (let* ((sym  (intern cn))
+                       (tag  (cdr (assq sym a/alias-tags)))
+                       (doc1 (cdr (assq sym a/alias-docs)))) ; cached first line (or nil)
+                  (concat
+                   (propertize " " 'display `(space :align-to ,doc-col))
+                   (when doc1 (propertize doc1 'face 'completions-annotations))
+                   (when tag  (propertize (format "  [%s]" tag) 'face 'shadow))))))
+             (prompt (if (eq a/alias-active-tag 'all)
+                         "Alias M-x: "
+                       (format "Alias M-x [%s]: " (symbol-name a/alias-active-tag))))
+             (choice (consult--read
+                      names
+                      :prompt prompt
+                      :require-match t
+                      :sort t
+                      :category 'a/alias
+                      :annotate annotate)))
+        (let* ((alias  (intern choice))
+               (target (or (cdr (assq alias a/alias-targets))
+                           (user-error "Alias %s not found" alias))))
+          (cond
+           ((commandp target) (call-interactively target))
+           ((fboundp  target) (funcall target))
+           (t (user-error "Target %s is not fboundp; load the package first" target))))))))
+
+
+
+(defun a/alias-refresh-docstrings ()
+  "Rebuild `a/alias-docs` from targets. Run after packages load or when you update targets."
+  (interactive)
+  (setq a/alias-docs nil)
+  (dolist (a a/aliases)
+    (let* ((tgt  (cdr (assq a a/alias-targets)))
+           (raw  (and tgt (fboundp tgt) (documentation tgt t)))
+           (doc1 (and (stringp raw) (car (split-string raw "\n")))))
+      (push (cons a doc1) a/alias-docs))))
+
 ;;* load elisp.el
-(load-file (expand-file-name "elisp.el" "~/.doom.d/"))
+;;(load-file (expand-file-name "elisp.el" "~/.doom.d/"))
+
+(mapc #'load (file-expand-wildcards (expand-file-name "conf/*.el" doom-user-dir)))
+(load-file (expand-file-name "alias.el" "~/.doom.d/"))
