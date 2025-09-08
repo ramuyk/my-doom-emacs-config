@@ -48,3 +48,5 @@
 (package! xclip)
 (package! yasnippet)
 (package! yasnippet-snippets)
+(package! restclient)
+(package! ob-restclient)
