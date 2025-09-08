@@ -101,12 +101,17 @@
 (a/defalias embark/bindings embark-bindings embark)
 
   ;;* flycheck
-(a/defalias flycheck/mode flycheck-mode embark)
+(a/defalias flycheck/mode flycheck-mode flycheck)
+(a/defalias flycheck/consult consult-flycheck flycheck)
 
   ;;* help
 (a/defalias help/at-point helpful-at-point help)
 
   ;;* ibuffer
+(a/defalias ibuffer-filter-by-mode ibuffer-filter-by-mode help)
+(a/defalias ibuffer-filter-by-name ibuffer-filter-by-name help)
+(a/defalias ibuffer-filter-by-content ibuffer-filter-by-content help)
+
   ;;* imenu
 (a/defalias imenu/consult consult-imenu imenu)
 (a/defalias imenu/consult-multi consult-imenu-multi imenu)
@@ -143,6 +148,9 @@
 (a/defalias workspace/restore-last-session +workspace/restore-last-session workspaces)
 (a/defalias workspace/save +workspace/save workspaces)
 (a/defalias workspace/switch-to +workspace/switch-to workspaces)
+
+  ;;* undo
+(a/defalias undo/tree-visualize undo-tree-visualize workspaces)
 
 ;;* check
   ;;* docker

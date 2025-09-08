@@ -14,6 +14,7 @@ sudo snap install emacs --classic
 sudo apt install build-essential cmake libtool libvterm-dev # for vterm only
 npm install -g typescript-language-server typescript eslint # for javascript lsp
 npm install -g pyright # for python lsp
+sudo snap install copilot-language-server
 ```
 
 ### Step 2: Install Doom Emacs with this Configuration
@@ -23,7 +24,6 @@ Clone both the Doom Emacs repository and this configuration repository, then run
 ```bash
 git clone --depth 1 https://github.com/hlissner/doom-emacs ~/.emacs.d
 git clone https://github.com/ramuyk/my-doom-emacs-config.git ~/.doom.d
-~/.emacs.d/bin/doom install
 ~/.emacs.d/bin/doom sync
 ```
 

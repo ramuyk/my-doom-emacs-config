@@ -52,10 +52,11 @@
     (evil-define-key 'normal 'global (kbd "M-<right>") 'centaur-tabs-move-current-tab-to-right)
     (evil-define-key 'normal 'global (kbd "'") 'q/evil-goto-marker-or-bookmark)
     (evil-define-key 'normal 'global (kbd "m") 'a/evil-set-marker-and-bookmark)
-    (evil-define-key 'normal 'global (kbd "z a") 'a/toggle-current-outline)
     (evil-define-key 'normal 'global (kbd "z e") 'a/org-next-src-block)
     (evil-define-key 'normal 'global (kbd "z f a") 'outline-hide-body)
     (evil-define-key 'normal 'global (kbd "z f u") 'outline-show-all)
+    (evil-define-key 'normal 'global (kbd "z c") 'outline-hide-body)
+    (evil-define-key 'normal 'global (kbd "z o") 'outline-show-all)
     (evil-define-key 'normal 'global (kbd "z n") 'a/narrow-to-outline)
     (evil-define-key 'normal 'global (kbd "z u") 'a/widen-and-collapse-if-narrowed)
     (evil-define-key 'normal 'global (kbd "z U") 'widen)
@@ -144,7 +145,10 @@
 
   ;;** a
 (shortcut "a" 'a/dired-root)
+
+
 (shortcut "SPC a" 'projectile-dired)
+
 
 (shortcut "A" 'dirvish)
 
@@ -164,6 +168,9 @@
 
 (shortcut "b s" 'swiper-isearch)
 (shortcut "b a" 'swiper-all)
+
+(shortcut "SPC b" 'ibuffer)
+
   ;;** c
 (shortcut "c c" 'a/execute-code)
 
@@ -195,6 +202,10 @@
 
 (shortcut "f t d" 'a/open-file "open-packages-el" (concat (getenv "HOME") "/.config/tmux/tmux.conf"))
 (shortcut "f t m" 'a/open-file "open-packages-el" (concat (getenv "HOME") "/.config/tmux/xbindkeysrc"))
+
+  ;;** i
+
+(shortcut "i i" 'a/gptel-select-model)
 
   ;;** j
 (shortcut "j w" 'a/avy-goto-char-timer-dim-screen)
@@ -829,6 +840,53 @@ Reuses *vterm: <name>* unless NEW (C-u) is provided. Groups correctly in ibuffer
         (switch-to-buffer buf)
         (delete-other-windows))))))
 
+;;* gptel
+
+(defvar a/gptel-model-history nil)
+(defun a/gptel-select-model ()
+  "Select a GPTel model from the *current* backend using Consult/Vertico.
+Marks the current model inline; updates `gptel-model`."
+  (interactive)
+  (require 'gptel)
+  (let* ((backend (or gptel-backend
+                      (user-error "No active gptel backend")))
+         (backend-name (gptel-backend-name backend))
+         (models (gptel-backend-models backend)))
+    (unless models
+      (user-error "Backend %s exposes no models" backend-name))
+    ;; Build display -> model mapping
+    (let* ((pairs (mapcar (lambda (model)
+                            (cons (format "[%s] %s"
+                                          backend-name
+                                          (gptel--model-name model))
+                                  model))
+                          models))
+           (keys  (mapcar #'car pairs))
+           (annot (lambda (cand)
+                    (when (eq (alist-get cand pairs nil nil #'string=)
+                              gptel-model)
+                      (propertize "  (current)" 'face 'success))))
+           (choice
+            (if (fboundp 'consult--read)
+                ;; Use Consult if present
+                (consult--read keys
+                  :prompt "Select GPTel model: "
+                  :require-match t
+                  :annotate annot
+                  :category 'gptel-model
+                  :history 'a/gptel-model-history)
+              ;; Plain completing-read path (Vertico handles UI)
+              (let ((completion-extra-properties
+                     (list :annotation-function annot)))
+                (completing-read "Select GPTel model: "
+                                 keys nil t nil
+                                 'a/gptel-model-history)))))
+      (let ((model (alist-get choice pairs nil nil #'string=)))
+        (unless model
+          (user-error "Invalid selection"))
+        (setq gptel-model model)
+        (message "GPTel model: %s" (gptel--model-name model))))))
+
 ;;* dired
 (defun a/dired-toggle-dotfiles ()
   "Toggle hiding of dotfiles in the current Dired buffer using dired-omit.
@@ -865,6 +923,7 @@ Preserves/restores this buffer's original dired-omit-files and dired-omit-mode."
       (dired-omit-mode 1)
       (revert-buffer)
       (message "Dotfiles hidden"))))
+
 
 ;;* exec functions
 
@@ -947,8 +1006,7 @@ Preserves/restores this buffer's original dired-omit-files and dired-omit-mode."
 (defun a/execute-org-code ()
   "Execute Org Babel code."
   (interactive)
-  (org-ctrl-c-ctrl-c))
-
+  (a/org-execute-block-in-split-window))
 
 (defvar execute-code-output-window nil
   "Window to display the output of executed code.")
@@ -964,6 +1022,345 @@ Preserves/restores this buffer's original dired-omit-files and dired-omit-mode."
         (when process
           (delete-process process)))
       (async-shell-command code output-buffer))))
+
+;;* org-mode execution
+(require 'cl-lib)
+(require 'ob-sql)
+
+(defun a/expand-global-vars ()
+  "Return an alist of #+EXPAND variables at the top level (before first heading)."
+  (save-excursion
+    (goto-char (point-min))
+    (let (vars
+          (first-heading
+            (or (save-excursion
+                  (re-search-forward org-heading-regexp nil t))
+                (point-max))))
+      (while (re-search-forward "^#\\+EXPAND: \\([^ ]+\\) +\\(.+\\)$" first-heading t)
+        (push (cons (match-string 1) (match-string 2)) vars))
+      vars)))
+
+(defun a/expand-local-vars ()
+  "Return an alist of #+EXPAND variables in the current subtree."
+  (save-excursion
+    (let* ((beg (org-entry-beginning-position))
+           (end (org-end-of-subtree t t))
+           vars)
+      (goto-char beg)
+      (while (re-search-forward "^#\\+EXPAND: \\([^ ]+\\) +\\(.+\\)$" end t)
+        (push (cons (match-string 1) (match-string 2)) vars))
+      vars)))
+
+(defun a/expand-block-vars ()
+  "Return an alist of EXPAND variables visible in the current context.
+1) Local (current subtree) via a/expand-local-vars
+2) Each parent heading, from closest to highest, also via a/expand-local-vars
+3) Top-level via a/expand-global-vars
+Inner variables always override outer ones."
+  (let* ((globals (a/expand-global-vars))
+         (vars    (a/expand-local-vars))
+         (pos     (point)))
+    (save-excursion
+      (org-back-to-heading t)
+      (while (org-up-heading-safe)
+        (let ((pv (a/expand-local-vars)))
+          (dolist (pair pv)
+            (unless (assoc (car pair) vars)
+              (push pair vars))))))
+    (goto-char pos)
+    (dolist (pair globals)
+      (unless (assoc (car pair) vars)
+        (push pair vars)))
+    vars))
+
+(defun a/expand-block-vars-with-keycloak ()
+  "Return alist of EXPAND variables, but only authenticate if some {{{KEYCLOAK_...}}} is used in the block."
+  (let* ((expand-alist (a/expand-block-vars))
+         (element (org-element-at-point))
+         (value (org-element-property :value element)))
+    (if (string-match "{{{\\(KEYCLOAK_[A-Z0-9_]+\\)}}}" value)
+        (let* ((get (lambda (k) (cdr (assoc k expand-alist))))
+               (tem-todos (and (funcall get "KEYCLOAK_SERVER")
+                               (funcall get "KEYCLOAK_REALM")
+                               (funcall get "KEYCLOAK_USER")
+                               (funcall get "KEYCLOAK_PASSWORD")
+                               (funcall get "KEYCLOAK_CLIENT_ID")
+                               (not (funcall get "KEYCLOAK_TOKEN")))))
+          (if tem-todos
+              (let ((token (a/keycloak-get-token (funcall get "KEYCLOAK_SERVER")
+                                                 (funcall get "KEYCLOAK_REALM")
+                                                 (funcall get "KEYCLOAK_CLIENT_ID")
+                                                 (funcall get "KEYCLOAK_USER")
+                                                 (funcall get "KEYCLOAK_PASSWORD"))))
+                (cons (cons "KEYCLOAK_TOKEN" token) expand-alist))
+            expand-alist))
+      expand-alist)))
+
+
+(defun a/keycloak-get-token (server realm client-id user password)
+  "Return a Keycloak access token string."
+  (let* ((url-request-method "POST")
+         (url-request-extra-headers '(("Content-Type" . "application/x-www-form-urlencoded")))
+         (url-request-data
+          (mapconcat #'identity
+                     (list
+                      (concat "grant_type=password")
+                      (concat "client_id=" client-id)
+                      (concat "username=" user)
+                      (concat "password=" password))
+                     "&"))
+         (url (format "%s/realms/%s/protocol/openid-connect/token"
+                      (replace-regexp-in-string "/$" "" server)
+                      realm))
+         (response-buffer (url-retrieve-synchronously url))
+         token)
+    (with-current-buffer response-buffer
+      (goto-char (point-min))
+      (re-search-forward "\n\n")
+      (let* ((json-object-type 'hash-table)
+             (json (json-read)))
+        (setq token (gethash "access_token" json))))
+    (when response-buffer (kill-buffer response-buffer))
+    token))
+
+
+
+(defun a/org-expand-block-at-point ()
+  "Return the body of the block at point, with {{{VAR}}} replaced by #+EXPAND: VAR val."
+  (let* ((expand-alist (a/expand-block-vars-with-keycloak))
+         (element (org-element-at-point))
+         (value (org-element-property :value element)))
+    (dolist (var expand-alist value)
+      (setq value (replace-regexp-in-string
+                   (format "{{{%s}}}" (regexp-quote (car var)))
+                   (cdr var) value t t)))
+    value))
+
+(defun a/pretty-ascii-table (table &optional truncate-length)
+  "Format TABLE (list of lists and 'hline) as an ASCII-art table. Truncates cells over TRUNCATE-LENGTH (default 30)."
+  (let* ((truncate-length (or truncate-length 30))
+         (truncated
+          (mapcar (lambda (row)
+                    (if (eq row 'hline) 'hline
+                      (mapcar (lambda (cell)
+                                (let ((str (format "%s" cell)))
+                                  (if (> (length str) truncate-length)
+                                      (concat (substring str 0 truncate-length) "…")
+                                    str)))
+                              row)))
+                  table))
+         (widths
+          (let ((widths nil))
+            (dolist (row truncated)
+              (unless (eq row 'hline)
+                (cl-loop for cell in row
+                         for i from 0
+                         do (setq widths
+                                  (plist-put widths i (max (or (plist-get widths i) 0)
+                                                           (length cell)))))))
+            (mapcar (lambda (i) (or (plist-get widths i) 1))
+                    (number-sequence 0 (1- (length (car (remove 'hline truncated)))))))))
+    (let ((lines
+           (mapcar
+            (lambda (row)
+              (if (eq row 'hline)
+                  (concat "+"
+                          (mapconcat (lambda (w) (make-string (+ w 2) ?-)) widths "+")
+                          "+")
+                (concat "| "
+                        (mapconcat #'identity
+                                   (cl-mapcar (lambda (cell w)
+                                                (format (format "%%-%ds" w) cell))
+                                              row widths)
+                                   " | ")
+                        " |")))
+            truncated)))
+      (mapconcat #'identity lines "\n"))))
+
+(defun a/setenv-global-vars ()
+  "Return an alist of #+SETENV pairs at the top level (antes do primeiro heading)."
+  (save-excursion
+    (goto-char (point-min))
+    (let ((vars nil)
+          (first-heading
+           (or (save-excursion (re-search-forward org-heading-regexp nil t))
+               (point-max))))
+      (while (re-search-forward "^#\\+SETENV:[ \t]+\\(.+\\)$" first-heading t)
+        (dolist (pair (split-string (match-string 1) "[ \t]+" t))
+          (when (string-match "^\\([^= \t]+\\)=\\(.*\\)$" pair)
+            (push (cons (match-string 1 pair)
+                        (match-string 2 pair))
+                  vars))))
+      vars)))
+
+(defun a/setenv-local-vars ()
+  "Return an alist of #+SETENV pairs in the current subtree."
+  (save-excursion
+    (let* ((beg (org-entry-beginning-position))
+           (end (org-end-of-subtree t t))
+           (vars nil))
+      (goto-char beg)
+      (while (re-search-forward "^#\\+SETENV:[ \t]+\\(.+\\)$" end t)
+        (dolist (pair (split-string (match-string 1) "[ \t]+" t))
+          (when (string-match "^\\([^= \t]+\\)=\\(.*\\)$" pair)
+            (push (cons (match-string 1 pair)
+                        (match-string 2 pair))
+                  vars))))
+      vars)))
+
+(defun a/setenv-block-vars ()
+  "Return an alist of #+SETENV pairs visible in the current context:
+1) local (subtree),
+2) each parent heading (from closest to highest),
+3) global (top-level).
+Inner values always override outer ones."
+  (let* ((globals (a/setenv-global-vars))
+         (vars    (a/setenv-local-vars))
+         (orig-pos (point)))
+    (save-excursion
+      (org-back-to-heading t)
+      (while (org-up-heading-safe)
+        (dolist (pair (a/setenv-local-vars))
+          (unless (assoc (car pair) vars)
+            (push pair vars)))))
+    (goto-char orig-pos)
+    (dolist (pair globals)
+      (unless (assoc (car pair) vars)
+        (push pair vars)))
+    vars))
+
+(defun a/org-setenv-from-top ()
+  "Set env vars based on all #+SETENV in the current context."
+  (dolist (pair (a/setenv-block-vars))
+    (setenv (car pair) (cdr pair))))
+
+(defun a/split-sql-queries-smart (sql)
+  "Split SQL string into individual statements, ignoring semicolons in strings.
+Very naive, good enough for 80% of real-life blocks."
+  (let* ((lines (split-string sql "\n"))
+         (stmts '())
+         (current ""))
+    (dolist (line lines)
+      (setq current (concat current (if (string= current "") "" "\n") line))
+      (when (string-match ";[ \t]*$" line)
+        (push (string-trim current) stmts)
+        (setq current "")))
+    (when (> (length (string-trim current)) 0)
+      (push (string-trim current) stmts))
+    (nreverse stmts)))
+
+(defun a/org-execute-block-in-split-window ()
+  "Execute the Org src block at point and show the result in a split window.
+Expands EXPAND macros ({{{VAR}}}) before executing jupyter-* blocks.
+SQL: splits queries, SELECT via org-babel for table formatting, others via shell.
+Other languages: normal execution, separate buffer.
+"
+  (interactive)
+  (a/org-setenv-from-top)
+  (let* ((orig-window      (selected-window))
+          (element          (org-element-at-point))
+          (lang             (org-element-property :language element))
+          (params           (org-babel-parse-header-arguments
+                              (org-element-property :parameters element)))
+          (is-jupyter       (string-prefix-p "jupyter-" lang))
+          (expanded-body    (a/org-expand-block-at-point))
+          (truncate-length  30)
+          (result-buffer-name
+            (if (string= lang "sql")
+              "*Org Babel SQL Result*"
+              "*Org Babel Result*")))
+    (cond
+      ;; --- Jupyter case: temporarily overwrite the expanded body ---
+      (is-jupyter
+        (let* ((begin (org-element-property :begin element))
+                (end (org-element-property :end element))
+                (orig-body (org-element-property :value element)))
+          (save-excursion
+            ;; Go to the beginning of the body
+            (goto-char begin)
+            (re-search-forward "^[ \t]*#\\+BEGIN_SRC[^\n]*\n")
+            (let ((start-body (point)))
+              (goto-char end)
+              (re-search-backward "^[ \t]*#\\+END_SRC" nil t)
+              (let ((inhibit-read-only t))
+                ;; Replace the body of the block with the expanded one
+                (delete-region start-body (point))
+                (goto-char start-body)
+                (insert expanded-body))
+              ;; Execute normally
+              (org-babel-execute-src-block)
+              ;; Restore the original body
+              (delete-region start-body (point))
+              (goto-char start-body)
+              (insert orig-body)))
+          (select-window orig-window)))
+      ;; --- SQL case -------------------
+      ((string= lang "sql")
+        (let ((buf (get-buffer-create result-buffer-name)))
+          (with-current-buffer buf
+            (erase-buffer)
+            (if (string-match-p "\\$\\$" expanded-body)
+              ;; PL/pgSQL block with $$ → execute everything via org-babel
+              (let ((res (org-babel-execute:sql expanded-body params)))
+                (cond
+                  ((and (listp res) res)
+                    (insert (a/pretty-ascii-table res truncate-length)))
+                  ((stringp res)
+                    (insert res))))
+              ;; case without $$ → split + original logic
+              (dolist (stmt (a/split-sql-queries-smart expanded-body))
+                (insert (format "\n\n%s\n" stmt))
+                (if (string-match-p "^\\s-*select\\b" (downcase stmt))
+                  (let ((res (org-babel-execute:sql stmt params)))
+                    (cond
+                      ((and res (listp res))
+                        (insert (a/pretty-ascii-table res truncate-length)))
+                      ((stringp res)
+                        (insert res))))
+                  (let* ((pguser     (getenv "PGUSER"))
+                          (pgpassword (getenv "PGPASSWORD"))
+                          (pghost     (getenv "PGHOST"))
+                          (pgdb       (getenv "PGDATABASE"))
+                          (cmd        (format "PGUSER='%s' PGPASSWORD='%s' PGHOST='%s' PGDATABASE='%s' psql -P pager=off -q -v ON_ERROR_STOP=1 -c \"%s\""
+                                        pguser pgpassword pghost pgdb
+                                        (replace-regexp-in-string "\"" "\\\\\"" stmt)))
+                          (out        (shell-command-to-string cmd)))
+                    (insert out)))
+                (insert "\n"))))
+          (display-buffer buf '(display-buffer-pop-up-window . ((window-height . 0.3))))
+          (select-window orig-window)))
+      ;; --- Other languages: normal execution + result buffer ---
+      (t
+        (let* ((info   (list lang expanded-body params))
+                (result (org-babel-execute-src-block nil info)))
+          (org-babel-remove-result)
+          (cond
+            ((and (stringp result))
+              (let ((buf (get-buffer-create result-buffer-name)))
+                (with-current-buffer buf
+                  (erase-buffer)
+                  (let ((body result))
+                    (when (string= lang "restclient")
+                      (let* ((sp      (string-match "\n\n" result))
+                              (payload (if sp (substring result (+ sp 2)) result)))
+                        (setq body payload)
+                        (cond
+                          ((string-match-p "^<\\?xml\\|<[^>]+>" body) (nxml-mode))
+                          ((string-match-p "^{" body) (json-mode)))))
+                    (insert body)
+                    (goto-char (point-min))))
+                (display-buffer buf '(display-buffer-pop-up-window . ((window-height . 0.3))))
+                (select-window orig-window)))
+            ((and (listp result))
+              (let ((buf (get-buffer-create result-buffer-name)))
+                (with-current-buffer buf
+                  (erase-buffer)
+                  (insert (a/pretty-ascii-table result truncate-length))
+                  (goto-char (point-min)))
+                (display-buffer buf '(display-buffer-pop-up-window . ((window-height . 0.3))))
+                (select-window orig-window)))
+            (t (message "Nenhum resultado obtido."))))))))
+
 
 ;;* root functions
 (defun a/root-reopen-file ()

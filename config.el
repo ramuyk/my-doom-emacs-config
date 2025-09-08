@@ -101,13 +101,14 @@
 ;; (load-theme 'doom-material t)
 ;; (load-theme 'doom-miramare t)
 ;; (load-theme 'doom-molokai t)
-;; (load-theme 'doom-monokai-classic t)
+;;(load-theme 'doom-monokai-classic t)
 ;; (load-theme 'doom-monokai-machine t)
 ;; (load-theme 'doom-monokai-octagon t)
 ;; (load-theme 'doom-monokai-pro t)
 ;; (load-theme 'doom-monokai-ristretto t)
 ;; (load-theme 'doom-monokai-spectrum t)
 (load-theme 'doom-nord t)
+;;;(load-theme 'doom-nord-aurora t)
 ;; (load-theme 'doom-nord-light t)
 ;; (load-theme 'doom-nova t)
 ;; (load-theme 'doom-oceanic-next t)
@@ -244,48 +245,6 @@ ARGS are fixed arguments passed to COMMAND."
     (setq tab-width 2)           ;; Set tab width to 2 spaces
     (setq lisp-indent-offset 2))) ;; Set Lisp indentation to 2 spaces
 
-;;* lsp
-
-;; Common Company settings
-(after! company
-  (setq company-idle-delay 0.1
-        company-minimum-prefix-length 1))
-
-(add-hook 'after-init-hook 'global-company-mode)
-
-;; Common LSP settings
-(after! lsp-mode
-  (setq lsp-enable-snippet t
-        lsp-auto-guess-root t))
-
-;; LSP UI settings (optional for better UI)
-(use-package! lsp-ui
-  :hook (lsp-mode . lsp-ui-mode)
-  :config
-  (setq lsp-ui-doc-enable t
-        lsp-ui-doc-position 'at-point
-        lsp-ui-doc-delay 0.2
-        lsp-ui-sideline-enable nil
-        lsp-ui-peek-enable t))
-
-(add-hook 'lsp-mode-hook 'lsp-ui-mode)
-
-;; Python LSP settings
-(after! lsp-python-ms
-  (setq lsp-python-ms-auto-install-server t))
-
-(add-hook 'python-mode-hook #'lsp)
-(add-hook 'python-mode-hook 'company-mode)
-
-;; JavaScript LSP settings
-(add-hook 'js-mode-hook #'lsp)
-(add-hook 'js2-mode-hook #'lsp)
-(add-hook 'rjsx-mode-hook #'lsp)
-
-(add-hook 'js-mode-hook 'company-mode)
-(add-hook 'js2-mode-hook 'company-mode)
-(add-hook 'rjsx-mode-hook 'company-mode)
-
 
 ;;* configuration
 (setq which-key-idle-delay 0.1)
@@ -340,6 +299,30 @@ ARGS are fixed arguments passed to COMMAND."
 (connection-local-set-profiles
   '(:application tramp :protocol "ssh")
   'remote-direct-async-process)
+
+
+(after! dirvish
+  (setq! dirvish-hide-details '(dired dirvish dirvish-side)))
+
+;; Limit at ~40 KB to avoid OSC 52 crashes in Termux
+(defun q/safe-cut-function (text &optional push)
+  (when (< (length text) 40000)
+    (x-select-text text)))   ;; only forward TEXT, not PUSH
+(defun q/set-cut-function-based-on-frame (frame)
+  (with-selected-frame frame
+    (if (display-graphic-p frame)
+        (setq interprogram-cut-function 'x-select-text)
+      (setq interprogram-cut-function #'q/safe-cut-function))))
+(add-hook 'after-make-frame-functions #'q/set-cut-function-based-on-frame)
+
+(after! ob-js (setq org-babel-js-cmd "node"))
+(org-babel-do-load-languages
+    'org-babel-load-languages
+    '((js . t)
+      (python . t)
+      (restclient . t)
+      (sql . t)
+      ))
 
 ;;* outline
 (defvar z/outline-regexp-alist
@@ -443,6 +426,8 @@ If not on a heading line, move to the previous visible heading and toggle its vi
       (outline-minor-mode 1)
       (evil-define-key 'normal outline-minor-mode-map (kbd "<tab>") 'a/context-aware-tab)
       (evil-define-key 'visual 'global (kbd "<tab>") 'a/toggle-comments)
+      (evil-define-key 'normal outline-minor-mode-map (kbd "TAB") 'a/context-aware-tab)
+      (evil-define-key 'visual 'global (kbd "TAB") 'a/toggle-comments)
       (cond
         ((eq major-mode 'python-mode)
           (setq-local outline-heading-end-regexp "\n"))
