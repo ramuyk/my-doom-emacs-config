@@ -582,6 +582,22 @@ Prompts for a command that starts with 'z/' and the number of repetitions."
   (gptel-send)
   (evil-normal-state))
 
+(defun a/docker-help ()
+  "Open the appropriate Docker help transient based on the current buffer name.
+Matches buffers like `*docker-containers*` even if they have TRAMP suffixes."
+  (interactive)
+  (let* ((bn (buffer-name))
+         (table '((".*\\*docker-containers\\*.*" . docker-container-help)
+                  (".*\\*docker-images\\*.*"     . docker-image-help)
+                  (".*\\*docker-volumes\\*.*"    . docker-volume-help)
+                  (".*\\*docker-networks\\*.*"   . docker-network-help)))
+         (fn (seq-some (lambda (entry)
+                         (when (string-match-p (car entry) bn)
+                           (cdr entry)))
+                       table)))
+    (when fn (funcall fn))))
+
+
 ;;* consult
 (defun a/consult-ripgrep-here (&optional initial)
   "Run `consult-ripgrep` in the current directory instead of project root."
