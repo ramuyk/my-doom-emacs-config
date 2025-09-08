@@ -324,6 +324,7 @@ ARGS are fixed arguments passed to COMMAND."
       (sql . t)
       ))
 
+(set-face-attribute 'default nil :font "DejaVu Sans Mono" :height 100)
 ;;* outline
 (defvar z/outline-regexp-alist
   '(
