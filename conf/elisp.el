@@ -63,6 +63,8 @@
     (evil-define-key 'visual 'global (kbd "t s") 'sort-lines)
     (evil-define-key 'visual 'global (kbd "t t") 'a/create-temp-buffer-with-selection)
     (evil-define-key 'visual 'global (kbd "t p") 'speed-type-region)
+    (evil-define-key 'normal 'global (kbd "P") 'a/evil-paste-before)
+    (evil-define-key 'normal 'global (kbd "p") 'a/evil-paste-after)
     (evil-define-key 'normal org-mode-map (kbd "<return>") 'a/execute-code)
     ))
 
@@ -128,6 +130,7 @@
 (shortcut "SPC SPC ," 'helm-find-files-1 "helm-open-home-dir" "/home/rafael/")
 
 (shortcut "SPC 1" 'delete-other-windows)
+(shortcut "SPC 2" 'winner-undo)
 (shortcut "SPC 0" 'delete-window)
 (shortcut "<" 'a/goto-previous-outline)
 (shortcut ">" 'a/goto-next-outline)
@@ -607,6 +610,19 @@ Matches buffers like `*docker-containers*` even if they have TRAMP suffixes."
                        table)))
     (when fn (funcall fn))))
 
+(defun a/evil-paste-after (&optional count register)
+  "An `evil-paste-after` variant that keeps the cursor in place."
+  (interactive "P<x>")
+  (let ((current-pos (point)))
+    (evil-paste-after count register)
+    (goto-char current-pos)))
+
+(defun a/evil-paste-before (&optional count register)
+  "An `evil-paste-before` variant that keeps the cursor in place."
+  (interactive "P<x>")
+  (let ((current-pos (point)))
+    (evil-paste-before count register)
+    (goto-char current-pos)))
 
 ;;* consult
 (defun a/consult-ripgrep-here (&optional initial)
