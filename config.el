@@ -325,6 +325,11 @@ ARGS are fixed arguments passed to COMMAND."
       ))
 
 (set-face-attribute 'default nil :font "DejaVu Sans Mono" :height 100)
+;;* sudo config
+(setenv "SUDO_ASKPASS" "")
+(setq epg-pinentry-mode 'loopback)
+(setq auth-source-save-behavior nil)  ; Don't auto-save, ask each time
+
 ;;* outline
 (defvar z/outline-regexp-alist
   '(
