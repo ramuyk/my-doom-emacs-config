@@ -63,6 +63,7 @@
     (evil-define-key 'visual 'global (kbd "t s") 'sort-lines)
     (evil-define-key 'visual 'global (kbd "t t") 'a/create-temp-buffer-with-selection)
     (evil-define-key 'visual 'global (kbd "t p") 'speed-type-region)
+    (evil-define-key 'normal org-mode-map (kbd "<return>") 'a/execute-code)
     ))
 
 (after! evil-org
@@ -173,6 +174,8 @@
 
   ;;** c
 (shortcut "c c" 'a/execute-code)
+(shortcut "c k" 'org-babel-remove-result)
+
 
   ;;** d
 ;;(shortcut "d d" 'revert-buffer)
