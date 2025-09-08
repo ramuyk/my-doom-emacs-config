@@ -178,7 +178,11 @@
 
 
   ;;** d
-;;(shortcut "d d" 'revert-buffer)
+(shortcut "d d" 'revert-buffer)
+(shortcut "d p" 'peep-dired)
+(shortcut "d k" 'dired-do-kill-lines)
+(shortcut "d n" 'dirvish-narrow)
+(shortcut "d ." 'a/dired-toggle-dotfiles)
 
   ;;** e
 ;; (shortcut "e e" 'eshell)
@@ -208,7 +212,13 @@
 
   ;;** i
 
-(shortcut "i i" 'a/gptel-select-model)
+(shortcut "i i" 'a/gptel-ask-rewrite)
+(shortcut "i I" 'a/gptel-edit-rewrite-history)
+(shortcut "i RET" 'a/gptel-select-model)
+
+(shortcut "i 1" 'gptel-menu)
+(shortcut "i 2" 'gptel-send)
+
 
   ;;** j
 (shortcut "j w" 'a/avy-goto-char-timer-dim-screen)
