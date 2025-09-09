@@ -66,6 +66,13 @@
     (evil-define-key 'normal 'global (kbd "P") 'a/evil-paste-before)
     (evil-define-key 'normal 'global (kbd "p") 'a/evil-paste-after)
     (evil-define-key 'normal org-mode-map (kbd "<return>") 'a/execute-code)
+    (evil-define-key 'normal 'global (kbd "SPC /") '+default/search-buffer)
+    (evil-define-key 'normal 'global (kbd "SPC SPC /") 'a/consult-ripgrep-project)
+    (evil-define-key 'normal 'global (kbd "SPC SPC SPC /") 'a/consult-project-open-buffers)
+    (evil-define-key 'normal 'global (kbd "SPC *") '+vertico/search-symbol-at-point)
+    (evil-define-key 'normal 'global (kbd "SPC SPC *") 'a/consult-ripgrep-project-symbol-at-point)
+    (evil-define-key 'normal 'global (kbd "SPC SPC SPC *") 'a/consult-project-open-buffers-symbol-at-point)
+
     ))
 
 (after! evil-org
@@ -138,8 +145,6 @@
 (shortcut ">" 'a/goto-next-outline)
 (shortcut "<left>" 'a/goto-previous-outline)
 (shortcut "<right>" 'a/goto-next-outline)
-(shortcut "/" 'swiper-isearch)
-(shortcut "SPC /" 'swiper-all)
 
 (shortcut ";" 'a/alias-M-x)
 (shortcut "SPC ;" 'a/alias-set-tag)
@@ -247,7 +252,7 @@
 (shortcut "p p" 'consult-dir)
 (shortcut "p P" 'projectile-switch-project)
 (shortcut "p f" 'projectile-find-file)
-(shortcut "p i" 'consult-git-grep)
+(shortcut "p i" 'a/consult-ripgrep-project)
 (shortcut "p k" 'a/projectile-kill-other-buffers)
 (map! :map dired-mode-map "SPC p k" 'centaur-tabs-kill-other-buffers-in-current-group)
 (shortcut "p j" 'a/consult-find-proj-gt-directories-from-file)
@@ -276,6 +281,13 @@
 (shortcut "w w" 'winner-undo)
 (shortcut "w f" 'winner-redo)
 
+
+  ;;** y
+(shortcut "y y" '+default/yank-pop)
+(shortcut "y f" 'a/copy-current-file-name-to-clipboard)
+(shortcut "y d" 'a/copy-current-folder-name-to-clipboard)
+(shortcut "y p" 'a/copy-current-project-root-to-clipboard)
+(shortcut "y l" '+org/yank-link)
 
 ;;* functions
 (defun a/open-file (path)
@@ -632,6 +644,67 @@ Matches buffers like `*docker-containers*` even if they have TRAMP suffixes."
   (org-babel-next-src-block)
   (evil-scroll-line-to-center nil))
 
+(defun a/copy-current-file-name-to-clipboard ()
+  "Copy current path to clipboard.
+- In a file buffer: copy the absolute file path.
+- In dired: copy the file under point (ignores marked files).
+- If in TRAMP, strip the remote prefix and only copy the local path."
+  (interactive)
+  (cond
+   ;; Dired buffer
+   ((derived-mode-p 'dired-mode)
+    (let* ((fname (dired-get-filename nil t)) ; file at point, nil if no file
+           (clean (when fname
+                    (or (file-remote-p fname 'localname) fname))))
+      (if clean
+          (progn
+            (kill-new clean)
+            (message "Copied dired file path '%s' to the clipboard." clean))
+        (error "No file at point"))))
+   ;; File-visiting buffer
+   ((buffer-file-name)
+    (let* ((filename (buffer-file-name))
+           (clean (or (file-remote-p filename 'localname) filename)))
+      (kill-new clean)
+      (message "Copied file path '%s' to the clipboard." clean)))
+   ;; Fallback
+   (t
+    (error "Not in a file-visiting buffer or dired"))))
+
+(defun a/copy-current-folder-name-to-clipboard ()
+  "Copy the directory path to the clipboard.
+- In dired: copy the directory being displayed.
+- In file buffers: copy the file’s parent directory.
+- In TRAMP, strip the remote prefix (only copy the local path)."
+  (interactive)
+  (cond
+   ;; Case: dired buffer
+   ((derived-mode-p 'dired-mode)
+    (let* ((dir (dired-current-directory))
+           (clean (or (file-remote-p dir 'localname) dir)))
+      (kill-new clean)
+      (message "Copied dired directory '%s' to the clipboard." clean)))
+
+   ;; Case: visiting a file
+   ((buffer-file-name)
+    (let* ((folder (file-name-directory (buffer-file-name)))
+           (clean  (or (file-remote-p folder 'localname) folder)))
+      (kill-new clean)
+      (message "Copied file directory '%s' to the clipboard." clean)))
+
+   ;; Fallback
+   (t
+    (error "Not in a file-visiting buffer or dired"))))
+
+(defun a/copy-current-project-root-to-clipboard ()
+  "Copy the current project's root directory to the clipboard."
+  (interactive)
+  (let ((project-root (projectile-project-root)))
+    (if project-root
+        (progn
+          (kill-new project-root)
+          (message "Copied project root directory '%s' to the clipboard." project-root))
+      (error "Not in a Projectile project"))))
 ;;* consult
 (defun a/consult-ripgrep-here (&optional initial)
   "Run `consult-ripgrep` in the current directory instead of project root."
@@ -773,6 +846,43 @@ With prefix EXIT, also abort the minibuffer."
     (when exit
       (abort-recursive-edit))))
 
+(defun a/consult-ripgrep-project (&optional initial)
+  "Run `consult-ripgrep` rooted at the project root, but ensure visiting files works."
+  (interactive)
+  (let* ((proj (or (consult--project-root)
+                   default-directory)))
+    (consult-ripgrep proj initial)))
+
+(defun a/consult-project-open-buffers ()
+  "Search open buffers that belong to the current project."
+  (interactive)
+  (let* ((proj (or (consult--project-root) default-directory))
+         (buffers (seq-filter
+                   (lambda (buf)
+                     (let ((file (buffer-file-name buf)))
+                       (and file (string-prefix-p proj file))))
+                   (buffer-list))))
+    (consult-line-multi buffers)))
+
+(defun a/consult-ripgrep-project-symbol-at-point ()
+  "Search the current project for the symbol at point using `consult-ripgrep`."
+  (interactive)
+  (let* ((proj (or (consult--project-root)
+                   default-directory))
+         (sym (thing-at-point 'symbol t)))
+    (consult-ripgrep proj sym)))
+
+(defun a/consult-project-open-buffers-symbol-at-point ()
+  "Search for the symbol at point across open buffers in the current project."
+  (interactive)
+  (let* ((proj (or (consult--project-root) default-directory))
+         (sym  (thing-at-point 'symbol t))
+         (buffers (seq-filter
+                   (lambda (buf)
+                     (let ((file (buffer-file-name buf)))
+                       (and file (string-prefix-p proj file))))
+                   (buffer-list))))
+    (consult-line-multi buffers sym)))
 ;;* shell
 (defun a/eshell-here ()
   "Open eshell in context of current buffer and make ibuffer group it by project/dir."
