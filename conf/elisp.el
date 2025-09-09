@@ -71,6 +71,8 @@
 (after! evil-org
   (evil-define-key 'normal evil-org-mode-map (kbd "S-<return>") 'gptel-send)
   (evil-define-key 'insert evil-org-mode-map (kbd "S-<return>") 'a/gptel-send-normal)
+  (evil-define-key 'normal evil-org-mode-map (kbd "M-j") 'a/org-babel-next-src-block-center)
+  (evil-define-key 'normal evil-org-mode-map (kbd "M-k") 'org-babel-previous-src-block)
   )
 
 ;;* evil shortcuts (harpoon)
@@ -623,6 +625,12 @@ Matches buffers like `*docker-containers*` even if they have TRAMP suffixes."
   (let ((current-pos (point)))
     (evil-paste-before count register)
     (goto-char current-pos)))
+
+(defun a/org-babel-next-src-block-center ()
+  "Move to the next src block and center the line."
+  (interactive)
+  (org-babel-next-src-block)
+  (evil-scroll-line-to-center nil))
 
 ;;* consult
 (defun a/consult-ripgrep-here (&optional initial)
